@@ -11,7 +11,7 @@ def _():
 
     from poffertjes import VariableBuilder, p
 
-    return VariableBuilder, np, pd
+    return VariableBuilder, np, p, pd
 
 
 @app.cell
@@ -32,12 +32,18 @@ def _(VariableBuilder, np, pd):
 
     x, y, z, u = vb.get_variables()
     x0, y0, z0, u0 = df.iloc[0]
-    return (df,)
+    return df, x, y
 
 
 @app.cell
 def _(df):
     df
+    return
+
+
+@app.cell
+def _(p, x, y):
+    p(x | (y > 2))
     return
 
 
