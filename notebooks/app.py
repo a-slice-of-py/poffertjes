@@ -42,7 +42,19 @@ def _(VariableBuilder, df):
 
 @app.cell
 def _(builder):
-    builder.get_variables("x")
+    x = builder.get_variables("x")
+    return (x,)
+
+
+@app.cell
+def _(x):
+    expr = x == 14
+    return (expr,)
+
+
+@app.cell
+def _(expr):
+    expr
     return
 
 

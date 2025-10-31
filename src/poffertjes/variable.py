@@ -1,8 +1,13 @@
 """Variable and VariableBuilder classes for extracting variables from dataframes."""
 
+from __future__ import annotations
+
 from typing import Any, List, Union
+
 import narwhals as nw
 from narwhals.typing import IntoFrameT
+
+from poffertjes.expression import Expression
 
 
 class Variable:
@@ -38,6 +43,108 @@ class Variable:
     def dataframe_id(self) -> int:
         """Return unique identifier for the source dataframe."""
         return self._frame_id
+
+    def __eq__(self, value: Any) -> Expression:
+        """Create equality expression.
+
+        Args:
+            value: The value to compare against
+
+        Returns:
+            Expression representing variable == value
+
+        Examples:
+            >>> x == 5  # Creates Expression(x, "==", 5)
+        """
+        return Expression(self, "==", value)
+
+    def __ne__(self, value: Any) -> Expression:
+        """Create inequality expression.
+
+        Args:
+            value: The value to compare against
+
+        Returns:
+            Expression representing variable != value
+
+        Examples:
+            >>> x != 5  # Creates Expression(x, "!=", 5)
+        """
+        return Expression(self, "!=", value)
+
+    def __lt__(self, value: Any) -> Expression:
+        """Create less-than expression.
+
+        Args:
+            value: The value to compare against
+
+        Returns:
+            Expression representing variable < value
+
+        Examples:
+            >>> x < 5  # Creates Expression(x, "<", 5)
+        """
+        return Expression(self, "<", value)
+
+    def __le__(self, value: Any) -> Expression:
+        """Create less-than-or-equal expression.
+
+        Args:
+            value: The value to compare against
+
+        Returns:
+            Expression representing variable <= value
+
+        Examples:
+            >>> x <= 5  # Creates Expression(x, "<=", 5)
+        """
+        return Expression(self, "<=", value)
+
+    def __gt__(self, value: Any) -> Expression:
+        """Create greater-than expression.
+
+        Args:
+            value: The value to compare against
+
+        Returns:
+            Expression representing variable > value
+
+        Examples:
+            >>> x > 5  # Creates Expression(x, ">", 5)
+        """
+        return Expression(self, ">", value)
+
+    def __ge__(self, value: Any) -> Expression:
+        """Create greater-than-or-equal expression.
+
+        Args:
+            value: The value to compare against
+
+        Returns:
+            Expression representing variable >= value
+
+        Examples:
+            >>> x >= 5  # Creates Expression(x, ">=", 5)
+        """
+        return Expression(self, ">=", value)
+
+    def isin(self, values: List[Any]) -> Expression:
+        """Create 'in' expression for categorical variables.
+
+        This is useful for checking if a variable's value is in a set of values,
+        particularly for categorical/string variables.
+
+        Args:
+            values: List of values to check membership against
+
+        Returns:
+            Expression representing variable in values
+
+        Examples:
+            >>> x.isin(['cat1', 'cat2', 'cat3'])
+            >>> x.isin([1, 2, 3])
+        """
+        return Expression(self, "in", values)
 
 
 class VariableBuilder:

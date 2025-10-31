@@ -25,6 +25,7 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 2.2 Create VariableBuilder class
 
+
     - Implement `__init__(data)` with Narwhals conversion
     - Implement `get_variables(*args)` method
     - Implement `from_data(data)` static method
@@ -32,7 +33,8 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Write unit tests for VariableBuilder
     - _Requirements: 3.1, 3.2, 3.3, 3.6, 17.1_
   
-  - [ ] 2.3 Add operator overloading to Variable
+  - [x] 2.3 Add operator overloading to Variable
+
     - Implement `__eq__`, `__ne__`, `__lt__`, `__le__`, `__gt__`, `__ge__` methods
     - Implement `isin()` method for categorical variables
     - Write unit tests for operator overloading
