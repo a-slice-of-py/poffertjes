@@ -63,7 +63,6 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 3.4 Create TernaryExpression class
 
-
     - Implement ternary condition support using `is_between`
     - Write unit tests for ternary expressions
     - _Requirements: 7.8, 9.4_
@@ -71,22 +70,21 @@ This implementation plan breaks down the probabilistic query interface into incr
 - [ ] 4. Implement P singleton interface
   - [x] 4.1 Create P class with singleton pattern
 
-
-
-
-
     - Implement `__new__` for singleton behavior
     - Implement `__call__` method
     - Write unit tests for singleton behavior
     - _Requirements: 2.1, 2.2, 2.3, 2.4_
   
-  - [ ] 4.2 Implement variable extraction and validation
+  - [x] 4.2 Implement variable extraction and validation
+
     - Implement `_extract_variables()` method
     - Implement `_validate_same_dataframe()` method
     - Write unit tests for validation
     - _Requirements: 13.2, 13.3, 13.6, 17.6_
   
-  - [ ] 4.3 Create and export p singleton instance
+  - [x] 4.3 Create and export p singleton instance
+
+
     - Create p instance in __init__.py
     - Write integration tests for `from poffertjes import p`
     - _Requirements: 2.1, 14.6_

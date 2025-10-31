@@ -239,3 +239,128 @@ class TestPIntegrationWithVariables:
         # Should raise ValueError about mixed dataframes, not ImportError
         with pytest.raises(ValueError, match="different dataframes"):
             p(x, y)
+
+
+class TestPImportIntegration:
+    """Integration tests for importing p from poffertjes package.
+    
+    These tests verify that the p singleton can be imported correctly
+    and maintains its singleton behavior across different import patterns.
+    This satisfies Requirements 2.1 and 14.6.
+    """
+
+    def test_import_p_from_poffertjes(self):
+        """Test that 'from poffertjes import p' works correctly.
+        
+        Requirement 2.1: WHEN a user imports poffertjes THEN they SHALL be able 
+        to use `from poffertjes import p`
+        """
+        # This import should work without errors
+        from poffertjes import p as imported_p
+        
+        # Verify it's the P singleton instance
+        assert isinstance(imported_p, P)
+        assert imported_p is p
+
+    def test_import_p_is_singleton(self):
+        """Test that imported p is the singleton instance.
+        
+        Requirement 2.2: WHEN the P class is instantiated THEN it SHALL follow 
+        the singleton pattern
+        """
+        from poffertjes import p as p1
+        
+        # Create a new instance
+        p2 = P()
+        
+        # They should be the same object
+        assert p1 is p2
+
+    def test_import_p_multiple_times_same_instance(self):
+        """Test that importing p multiple times gives the same instance.
+        
+        Requirement 2.4: WHEN multiple imports of `p` occur THEN they SHALL 
+        reference the same singleton instance
+        """
+        # Import from different locations
+        from poffertjes import p as p1
+        from poffertjes.p_interface import p as p2
+        
+        # Both should be the same instance
+        assert p1 is p2
+        
+        # And both should be the module-level p
+        assert p1 is p
+        assert p2 is p
+
+    def test_import_p_callable(self):
+        """Test that imported p is callable.
+        
+        Requirement 2.3: WHEN a user calls `p(...)` THEN the `__call__` method 
+        SHALL be invoked
+        """
+        from poffertjes import p as imported_p
+        
+        # Verify it's callable
+        assert callable(imported_p)
+        
+        # Verify calling it invokes __call__ (will fail without arguments)
+        with pytest.raises(ValueError, match="requires at least one argument"):
+            imported_p()
+
+    def test_import_p_works_in_user_code_pattern(self):
+        """Test the typical user import pattern works correctly.
+        
+        This simulates how users will actually use the library:
+        1. Import p from poffertjes
+        2. Create variables from a dataframe
+        3. Use p with those variables
+        
+        Requirements 2.1, 14.6: User-friendly import and usage pattern
+        """
+        # Typical user code pattern
+        from poffertjes import p as user_p
+        
+        df = pd.DataFrame({'x': [1, 2, 3, 1, 2], 'y': [5, 6, 7, 5, 6]})
+        vb = VariableBuilder.from_data(df)
+        x, y = vb.get_variables('x', 'y')
+        
+        # Verify p is callable with variables (execution will fail until QueryBuilder is implemented)
+        with pytest.raises((ImportError, AttributeError, NotImplementedError)):
+            user_p(x)
+        
+        # Verify validation works
+        df2 = pd.DataFrame({'z': [8, 9, 10]})
+        vb2 = VariableBuilder.from_data(df2)
+        z = vb2.get_variables('z')
+        
+        with pytest.raises(ValueError, match="different dataframes"):
+            user_p(x, z)
+
+    def test_import_p_available_in_all_attribute(self):
+        """Test that p is listed in __all__ for proper export.
+        
+        Requirement 14.6: Proper API exposure through __all__
+        """
+        import poffertjes
+        
+        # Verify p is in __all__
+        assert 'p' in poffertjes.__all__
+        
+        # Verify p is accessible as attribute
+        assert hasattr(poffertjes, 'p')
+        assert poffertjes.p is p
+
+    def test_import_star_includes_p(self):
+        """Test that 'from poffertjes import *' includes p.
+        
+        Requirement 14.6: Proper API exposure
+        """
+        # Create a new namespace to test import *
+        namespace = {}
+        exec("from poffertjes import *", namespace)
+        
+        # Verify p is in the namespace
+        assert 'p' in namespace
+        assert isinstance(namespace['p'], P)
+        assert namespace['p'] is p

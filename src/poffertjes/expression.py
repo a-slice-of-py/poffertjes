@@ -1,10 +1,14 @@
 """Expression system for building probabilistic queries."""
 
+from __future__ import annotations
+
 from enum import Enum
-from typing import Any, Union, List
+from typing import Any, Union, List, TYPE_CHECKING
 
 import narwhals as nw
-from poffertjes.variable import Variable
+
+if TYPE_CHECKING:
+    from poffertjes.variable import Variable
 
 
 class ExpressionOp(Enum):
