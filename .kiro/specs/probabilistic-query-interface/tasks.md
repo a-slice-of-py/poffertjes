@@ -69,7 +69,12 @@ This implementation plan breaks down the probabilistic query interface into incr
     - _Requirements: 7.8, 9.4_
 
 - [ ] 4. Implement P singleton interface
-  - [ ] 4.1 Create P class with singleton pattern
+  - [x] 4.1 Create P class with singleton pattern
+
+
+
+
+
     - Implement `__new__` for singleton behavior
     - Implement `__call__` method
     - Write unit tests for singleton behavior

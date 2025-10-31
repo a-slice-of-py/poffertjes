@@ -1,12 +1,10 @@
 """Expression system for building probabilistic queries."""
 
 from enum import Enum
-from typing import Any, Union, List, TYPE_CHECKING
+from typing import Any, Union, List
 
 import narwhals as nw
-
-if TYPE_CHECKING:
-    from poffertjes.variable import Variable
+from poffertjes.variable import Variable
 
 
 class ExpressionOp(Enum):
@@ -63,7 +61,9 @@ class Expression:
                 f"Expression({self.value} < {self.variable.name} < {self.upper_bound})"
             )
         else:
-            return f"Expression({self.variable.name} {self.operator.value} {self.value})"
+            return (
+                f"Expression({self.variable.name} {self.operator.value} {self.value})"
+            )
 
     def __and__(self, other: "Expression") -> "CompositeExpression":
         """Combine expressions with AND logic.
@@ -135,11 +135,11 @@ class Expression:
 
 class TernaryExpression(Expression):
     """Represents a ternary expression like a < x < b.
-    
+
     This class provides a specialized implementation for range conditions,
     using Narwhals' efficient is_between method for better performance
     compared to combining separate comparison expressions.
-    
+
     Examples:
         >>> # Create a ternary expression for 3 < x < 7
         >>> expr = TernaryExpression(x, 3, 7, closed="none")
@@ -147,11 +147,7 @@ class TernaryExpression(Expression):
     """
 
     def __init__(
-        self,
-        variable: "Variable",
-        lower: Any,
-        upper: Any,
-        closed: str = "none"
+        self, variable: "Variable", lower: Any, upper: Any, closed: str = "none"
     ) -> None:
         """Initialize a TernaryExpression.
 
@@ -172,7 +168,7 @@ class TernaryExpression(Expression):
             raise ValueError(
                 f"closed must be one of 'none', 'left', 'right', 'both', got: {closed}"
             )
-        
+
         # Initialize parent with BETWEEN operator
         super().__init__(variable, ExpressionOp.BETWEEN, lower, upper)
         self.closed = closed
@@ -182,7 +178,7 @@ class TernaryExpression(Expression):
         var_name = self.variable.name
         lower = self.value
         upper = self.upper_bound
-        
+
         if self.closed == "none":
             return f"TernaryExpression({lower} < {var_name} < {upper})"
         elif self.closed == "left":
@@ -244,7 +240,9 @@ class CompositeExpression:
         logic_str = " & " if self.logic == "AND" else " | "
         return f"({logic_str.join(expr_strs)})"
 
-    def __and__(self, other: Union[Expression, "CompositeExpression"]) -> "CompositeExpression":
+    def __and__(
+        self, other: Union[Expression, "CompositeExpression"]
+    ) -> "CompositeExpression":
         """Combine with another expression using AND logic.
 
         Args:
@@ -258,7 +256,9 @@ class CompositeExpression:
         """
         return CompositeExpression([self, other], "AND")
 
-    def __or__(self, other: Union[Expression, "CompositeExpression"]) -> "CompositeExpression":
+    def __or__(
+        self, other: Union[Expression, "CompositeExpression"]
+    ) -> "CompositeExpression":
         """Combine with another expression using OR logic.
 
         Args:
