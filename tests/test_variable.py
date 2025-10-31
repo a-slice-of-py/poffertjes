@@ -3,6 +3,7 @@
 import pandas as pd
 import narwhals as nw
 from poffertjes.variable import Variable, VariableBuilder
+from poffertjes.expression import Expression, ExpressionOp
 
 
 class TestVariable:
@@ -87,8 +88,7 @@ class TestVariableOperatorOverloading:
     """Tests for Variable operator overloading."""
 
     def test_eq_operator(self):
-        """Test that == operator creates an Expression."""
-        from poffertjes.expression import Expression
+        """Test that == operator creates an Expression."""        
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -97,12 +97,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == "=="
+        assert expr.operator == ExpressionOp.EQ
         assert expr.value == 5
 
     def test_ne_operator(self):
         """Test that != operator creates an Expression."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -111,12 +110,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == "!="
+        assert expr.operator == ExpressionOp.NE
         assert expr.value == 5
 
     def test_lt_operator(self):
         """Test that < operator creates an Expression."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -125,12 +123,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == "<"
+        assert expr.operator == ExpressionOp.LT
         assert expr.value == 5
 
     def test_le_operator(self):
         """Test that <= operator creates an Expression."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -139,12 +136,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == "<="
+        assert expr.operator == ExpressionOp.LE
         assert expr.value == 5
 
     def test_gt_operator(self):
         """Test that > operator creates an Expression."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -153,12 +149,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == ">"
+        assert expr.operator == ExpressionOp.GT
         assert expr.value == 5
 
     def test_ge_operator(self):
         """Test that >= operator creates an Expression."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -167,12 +162,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == ">="
+        assert expr.operator == ExpressionOp.GE
         assert expr.value == 5
 
     def test_isin_method(self):
         """Test that isin() method creates an Expression."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": ["a", "b", "c"]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -181,12 +175,11 @@ class TestVariableOperatorOverloading:
 
         assert isinstance(expr, Expression)
         assert expr.variable is var
-        assert expr.operator == "in"
+        assert expr.operator == ExpressionOp.IN
         assert expr.value == ["a", "b", "c"]
 
     def test_operators_with_integer_values(self):
         """Test operators work with integer values."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -201,7 +194,6 @@ class TestVariableOperatorOverloading:
 
     def test_operators_with_float_values(self):
         """Test operators work with float values."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1.1, 2.2, 3.3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -216,7 +208,6 @@ class TestVariableOperatorOverloading:
 
     def test_operators_with_string_values(self):
         """Test operators work with string values."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"category": ["cat1", "cat2", "cat3"]})
         nw_frame = nw.from_native(df)
         var = Variable("category", nw_frame)
@@ -229,7 +220,6 @@ class TestVariableOperatorOverloading:
 
     def test_operators_with_boolean_values(self):
         """Test operators work with boolean values."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"flag": [True, False, True]})
         nw_frame = nw.from_native(df)
         var = Variable("flag", nw_frame)
@@ -242,7 +232,6 @@ class TestVariableOperatorOverloading:
 
     def test_isin_with_integer_list(self):
         """Test isin() works with list of integers."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -250,11 +239,10 @@ class TestVariableOperatorOverloading:
         expr = var.isin([1, 3, 5])
 
         assert expr.value == [1, 3, 5]
-        assert expr.operator == "in"
+        assert expr.operator == ExpressionOp.IN
 
     def test_isin_with_string_list(self):
         """Test isin() works with list of strings."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"category": ["cat1", "cat2", "cat3"]})
         nw_frame = nw.from_native(df)
         var = Variable("category", nw_frame)
@@ -262,11 +250,10 @@ class TestVariableOperatorOverloading:
         expr = var.isin(["cat1", "cat2"])
 
         assert expr.value == ["cat1", "cat2"]
-        assert expr.operator == "in"
+        assert expr.operator == ExpressionOp.IN
 
     def test_isin_with_empty_list(self):
         """Test isin() works with empty list."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -274,7 +261,7 @@ class TestVariableOperatorOverloading:
         expr = var.isin([])
 
         assert expr.value == []
-        assert expr.operator == "in"
+        assert expr.operator == ExpressionOp.IN
 
     def test_expression_repr_for_equality(self):
         """Test that Expression has proper repr for equality."""
@@ -344,7 +331,6 @@ class TestVariableOperatorOverloading:
 
     def test_operators_with_none_value(self):
         """Test operators work with None value."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, None]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -357,7 +343,6 @@ class TestVariableOperatorOverloading:
 
     def test_isin_with_mixed_types(self):
         """Test isin() with mixed types in list."""
-        from poffertjes.expression import Expression
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
@@ -366,7 +351,7 @@ class TestVariableOperatorOverloading:
         expr = var.isin([1, "2", 3.0])
 
         assert expr.value == [1, "2", 3.0]
-        assert expr.operator == "in"
+        assert expr.operator == ExpressionOp.IN
 
 
 

@@ -25,7 +25,6 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 2.2 Create VariableBuilder class
 
-
     - Implement `__init__(data)` with Narwhals conversion
     - Implement `get_variables(*args)` method
     - Implement `from_data(data)` static method
@@ -41,7 +40,9 @@ This implementation plan breaks down the probabilistic query interface into incr
     - _Requirements: 9.1, 9.2, 9.3, 14.3_
 
 - [ ] 3. Implement Expression system
-  - [ ] 3.1 Create ExpressionOp enum
+  - [x] 3.1 Create ExpressionOp enum
+
+
     - Define all operators (EQ, NE, LT, LE, GT, GE, BETWEEN, IN)
     - Write unit tests for enum
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
