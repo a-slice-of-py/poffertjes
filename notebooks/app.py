@@ -8,8 +8,8 @@ app = marimo.App(width="medium")
 def _():
     import pandas as pd
     import numpy as np
-    from poffertjes.variable import Variable
-    return Variable, np, pd
+    from poffertjes.variable import Variable, VariableBuilder
+    return VariableBuilder, np, pd
 
 
 @app.cell
@@ -35,13 +35,14 @@ def _(df):
 
 
 @app.cell
-def _(Variable, df):
-    Variable(name="a", nw_frame=df)
-    return
+def _(VariableBuilder, df):
+    builder = VariableBuilder.from_data(df)
+    return (builder,)
 
 
 @app.cell
-def _():
+def _(builder):
+    builder.get_variables("x")
     return
 
 

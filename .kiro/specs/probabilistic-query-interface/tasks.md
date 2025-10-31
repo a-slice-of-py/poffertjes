@@ -17,14 +17,14 @@ This implementation plan breaks down the probabilistic query interface into incr
 - [ ] 2. Implement Variable and VariableBuilder classes
   - [x] 2.1 Create Variable class with basic structure
 
-
     - Implement `__init__(name, nw_frame, frame_id)`
     - Implement `__repr__` and `__str__` methods
     - Implement `dataframe_id` property
     - Write unit tests for Variable creation and representation
     - _Requirements: 3.1, 3.4, 3.5, 14.3_
   
-  - [ ] 2.2 Create VariableBuilder class
+  - [x] 2.2 Create VariableBuilder class
+
     - Implement `__init__(data)` with Narwhals conversion
     - Implement `get_variables(*args)` method
     - Implement `from_data(data)` static method

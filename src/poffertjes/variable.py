@@ -1,6 +1,8 @@
 """Variable and VariableBuilder classes for extracting variables from dataframes."""
 
-from typing import Any
+from typing import Any, List, Union
+import narwhals as nw
+from narwhals.typing import IntoFrameT
 
 
 class Variable:
@@ -36,3 +38,98 @@ class Variable:
     def dataframe_id(self) -> int:
         """Return unique identifier for the source dataframe."""
         return self._frame_id
+
+
+class VariableBuilder:
+    """Factory for creating Variable objects from dataframes.
+
+    The builder stores the dataframe once, and all variables created from it
+    reference the builder. This avoids duplicating the dataframe in memory.
+    """
+
+    def __init__(self, data: IntoFrameT) -> None:
+        """Initialize a VariableBuilder with a dataframe.
+
+        Args:
+            data: A Pandas or Polars dataframe (or any Narwhals-compatible frame)
+
+        Raises:
+            ValueError: If the dataframe is empty
+        """
+        # Convert to Narwhals frame
+        self._nw_frame = nw.from_native(data)
+
+        # Validate dataframe is not empty
+        if len(self._nw_frame) == 0:
+            raise ValueError("Cannot create variables from an empty dataframe")
+
+        # Cache the dataframe identity
+        self._id = id(self._nw_frame)
+
+    @property
+    def dataframe_id(self) -> int:
+        """Return unique identifier for the dataframe."""
+        return self._id
+
+    def get_variables(self, *args: str) -> Union[List[Variable], Variable]:
+        """Extract variables from dataframe columns.
+
+        Args:
+            *args: Column names. If empty, returns all columns.
+                   If single column name, returns single Variable.
+                   If multiple column names, returns list of Variables.
+
+        Returns:
+            Variable or List of Variable objects.
+
+        Raises:
+            ValueError: If a column name doesn't exist in the dataframe.
+
+        Examples:
+            >>> vb = VariableBuilder.from_data(df)
+            >>> x, y, z = vb.get_variables('x', 'y', 'z')
+            >>> all_vars = vb.get_variables()  # All columns
+        """
+        # Determine which columns to extract
+        if args:
+            columns = list(args)
+        else:
+            columns = self._nw_frame.columns
+
+        # Validate columns exist
+        missing = set(columns) - set(self._nw_frame.columns)
+        if missing:
+            raise ValueError(
+                f"Columns not found in dataframe: {sorted(missing)}. "
+                f"Available columns: {sorted(self._nw_frame.columns)}"
+            )
+
+        # Create Variable objects
+        # All variables share the same frame reference (no duplication)
+        variables = [Variable(name, self._nw_frame) for name in columns]
+
+        # Return single Variable if only one requested, otherwise list
+        if len(variables) == 1 and args:
+            return variables[0]
+        return variables
+
+    @staticmethod
+    def from_data(data: IntoFrameT) -> "VariableBuilder":
+        """Create a VariableBuilder from a dataframe.
+
+        Args:
+            data: A Pandas or Polars dataframe (or any Narwhals-compatible frame)
+
+        Returns:
+            A new VariableBuilder instance
+
+        Raises:
+            ValueError: If the dataframe is empty
+
+        Examples:
+            >>> import pandas as pd
+            >>> df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]})
+            >>> vb = VariableBuilder.from_data(df)
+            >>> x, y = vb.get_variables('x', 'y')
+        """
+        return VariableBuilder(data)
