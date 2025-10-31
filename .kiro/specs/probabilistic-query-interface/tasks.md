@@ -48,21 +48,22 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 3.2 Create Expression class
 
-
-
     - Implement `__init__(variable, operator, value, upper_bound)`
     - Implement `to_narwhals_expr()` method using native Narwhals expressions
     - Implement `__and__` and `__or__` for combining expressions
     - Write unit tests for Expression creation and conversion
     - _Requirements: 7.7, 7.8, 7.9, 9.1, 9.2, 9.3_
   
-  - [ ] 3.3 Create CompositeExpression class
+  - [x] 3.3 Create CompositeExpression class
+
     - Implement `__init__(expressions, logic)`
     - Implement `to_narwhals_expr()` for AND/OR logic
     - Write unit tests for composite expressions
     - _Requirements: 9.6_
   
-  - [ ] 3.4 Create TernaryExpression class
+  - [x] 3.4 Create TernaryExpression class
+
+
     - Implement ternary condition support using `is_between`
     - Write unit tests for ternary expressions
     - _Requirements: 7.8, 9.4_

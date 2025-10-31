@@ -133,6 +133,84 @@ class Expression:
             raise ValueError(f"Unsupported operator: {self.operator}")
 
 
+class TernaryExpression(Expression):
+    """Represents a ternary expression like a < x < b.
+    
+    This class provides a specialized implementation for range conditions,
+    using Narwhals' efficient is_between method for better performance
+    compared to combining separate comparison expressions.
+    
+    Examples:
+        >>> # Create a ternary expression for 3 < x < 7
+        >>> expr = TernaryExpression(x, 3, 7, closed="none")
+        >>> # This is more efficient than (x > 3) & (x < 7)
+    """
+
+    def __init__(
+        self,
+        variable: "Variable",
+        lower: Any,
+        upper: Any,
+        closed: str = "none"
+    ) -> None:
+        """Initialize a TernaryExpression.
+
+        Args:
+            variable: The Variable this expression operates on
+            lower: The lower bound of the range
+            upper: The upper bound of the range
+            closed: Which bounds to include. Options:
+                - "none": lower < x < upper (exclusive on both sides)
+                - "left": lower <= x < upper (inclusive on left)
+                - "right": lower < x <= upper (inclusive on right)
+                - "both": lower <= x <= upper (inclusive on both sides)
+
+        Raises:
+            ValueError: If closed is not one of the valid options
+        """
+        if closed not in ("none", "left", "right", "both"):
+            raise ValueError(
+                f"closed must be one of 'none', 'left', 'right', 'both', got: {closed}"
+            )
+        
+        # Initialize parent with BETWEEN operator
+        super().__init__(variable, ExpressionOp.BETWEEN, lower, upper)
+        self.closed = closed
+
+    def __repr__(self) -> str:
+        """Return string representation of the ternary expression."""
+        var_name = self.variable.name
+        lower = self.value
+        upper = self.upper_bound
+        
+        if self.closed == "none":
+            return f"TernaryExpression({lower} < {var_name} < {upper})"
+        elif self.closed == "left":
+            return f"TernaryExpression({lower} <= {var_name} < {upper})"
+        elif self.closed == "right":
+            return f"TernaryExpression({lower} < {var_name} <= {upper})"
+        else:  # both
+            return f"TernaryExpression({lower} <= {var_name} <= {upper})"
+
+    def to_narwhals_expr(self) -> Any:
+        """Convert to Narwhals is_between expression.
+
+        This method uses Narwhals' optimized is_between method which is
+        more efficient than combining separate comparison expressions.
+
+        Returns:
+            Narwhals expression object using is_between
+
+        Examples:
+            >>> expr = TernaryExpression(x, 3, 7, closed="none")
+            >>> nw_expr = expr.to_narwhals_expr()
+            >>> # Equivalent to nw.col('x').is_between(3, 7, closed="none")
+        """
+        return nw.col(self.variable.name).is_between(
+            self.value, self.upper_bound, closed=self.closed
+        )
+
+
 class CompositeExpression:
     """Represents multiple expressions combined with AND/OR logic.
 

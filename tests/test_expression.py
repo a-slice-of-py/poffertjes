@@ -292,12 +292,11 @@ class TestExpressionToNarwhalsExpr:
         
         nw_df = nw.from_native(df)
         result = nw_df.filter(nw_expr)
-        # Note: Narwhals is_between with closed="none" currently includes both bounds
-        # This appears to be the default behavior in the current version
-        # Expected: 3 <= x <= 7
+        # Note: Narwhals is_between with closed="none" excludes both bounds
+        # Expected: 3 < x < 7
         result_list = result["x"].to_list()
-        assert len(result) == 5
-        assert result_list == [3, 4, 5, 6, 7]
+        assert len(result) == 3
+        assert result_list == [4, 5, 6]
 
     def test_to_narwhals_expr_in(self):
         """Test conversion of IN expression to Narwhals."""
@@ -644,6 +643,396 @@ class TestCompositeExpression:
         # Row 4: x=5, y=1 ✓
         assert len(result) == 3
         assert result["x"].to_list() == [3, 4, 5]
+
+
+class TestTernaryExpression:
+    """Test suite for TernaryExpression class."""
+
+    def test_ternary_expression_creation(self):
+        """Test creating a TernaryExpression."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        expr = Expression(x, "between", 3, upper_bound=7)
+        
+        assert expr.operator == ExpressionOp.BETWEEN
+        assert expr.value == 3
+        assert expr.upper_bound == 7
+
+    def test_ternary_expression_stores_variable(self):
+        """Test that TernaryExpression stores the variable reference."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4)
+        
+        assert expr.variable is x
+
+    def test_ternary_expression_stores_bounds(self):
+        """Test that TernaryExpression stores lower and upper bounds."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4)
+        
+        assert expr.value == 2  # lower bound
+        assert expr.upper_bound == 4  # upper bound
+
+    def test_ternary_expression_default_closed_none(self):
+        """Test that TernaryExpression defaults to closed='none'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4)
+        
+        assert expr.closed == "none"
+
+    def test_ternary_expression_closed_left(self):
+        """Test TernaryExpression with closed='left'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="left")
+        
+        assert expr.closed == "left"
+
+    def test_ternary_expression_closed_right(self):
+        """Test TernaryExpression with closed='right'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="right")
+        
+        assert expr.closed == "right"
+
+    def test_ternary_expression_closed_both(self):
+        """Test TernaryExpression with closed='both'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="both")
+        
+        assert expr.closed == "both"
+
+    def test_ternary_expression_invalid_closed_raises_error(self):
+        """Test that invalid closed parameter raises ValueError."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        
+        with pytest.raises(ValueError, match="closed must be one of"):
+            TernaryExpression(x, 2, 4, closed="invalid")
+
+    def test_ternary_expression_repr_none(self):
+        """Test TernaryExpression repr with closed='none'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="none")
+        
+        repr_str = repr(expr)
+        assert "2 < x < 4" in repr_str
+        assert "TernaryExpression" in repr_str
+
+    def test_ternary_expression_repr_left(self):
+        """Test TernaryExpression repr with closed='left'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="left")
+        
+        repr_str = repr(expr)
+        assert "2 <= x < 4" in repr_str
+
+    def test_ternary_expression_repr_right(self):
+        """Test TernaryExpression repr with closed='right'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="right")
+        
+        repr_str = repr(expr)
+        assert "2 < x <= 4" in repr_str
+
+    def test_ternary_expression_repr_both(self):
+        """Test TernaryExpression repr with closed='both'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="both")
+        
+        repr_str = repr(expr)
+        assert "2 <= x <= 4" in repr_str
+
+    def test_ternary_expression_to_narwhals_expr_none(self):
+        """Test TernaryExpression conversion to Narwhals with closed='none'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="none")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # With closed="none", should exclude both bounds: 2 < x < 4
+        # Expected: [3]
+        assert len(result) == 1
+        assert result["x"].to_list() == [3]
+
+    def test_ternary_expression_to_narwhals_expr_left(self):
+        """Test TernaryExpression conversion to Narwhals with closed='left'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="left")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # With closed="left", should include left bound: 2 <= x < 4
+        # Expected: [2, 3]
+        assert len(result) == 2
+        assert result["x"].to_list() == [2, 3]
+
+    def test_ternary_expression_to_narwhals_expr_right(self):
+        """Test TernaryExpression conversion to Narwhals with closed='right'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="right")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # With closed="right", should include right bound: 2 < x <= 4
+        # Expected: [3, 4]
+        assert len(result) == 2
+        assert result["x"].to_list() == [3, 4]
+
+    def test_ternary_expression_to_narwhals_expr_both(self):
+        """Test TernaryExpression conversion to Narwhals with closed='both'."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4, closed="both")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # With closed="both", should include both bounds: 2 <= x <= 4
+        # Expected: [2, 3, 4]
+        assert len(result) == 3
+        assert result["x"].to_list() == [2, 3, 4]
+
+    def test_ternary_expression_with_float_values(self):
+        """Test TernaryExpression with float values."""
+        df = pd.DataFrame({"x": [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2.0, 4.0, closed="none")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # 2.0 < x < 4.0
+        expected = [2.5, 3.0, 3.5]
+        assert result["x"].to_list() == expected
+
+    def test_ternary_expression_with_negative_values(self):
+        """Test TernaryExpression with negative values."""
+        df = pd.DataFrame({"x": [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, -3, 2, closed="both")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # -3 <= x <= 2
+        expected = [-3, -2, -1, 0, 1, 2]
+        assert result["x"].to_list() == expected
+
+    def test_ternary_expression_with_large_range(self):
+        """Test TernaryExpression with a large range."""
+        df = pd.DataFrame({"x": list(range(1, 101))})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 25, 75, closed="both")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        # 25 <= x <= 75
+        assert len(result) == 51  # 25 to 75 inclusive
+        assert result["x"].to_list()[0] == 25
+        assert result["x"].to_list()[-1] == 75
+
+    def test_ternary_expression_empty_result(self):
+        """Test TernaryExpression that matches no rows."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 10, 20, closed="both")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        assert len(result) == 0
+
+    def test_ternary_expression_single_value_in_range(self):
+        """Test TernaryExpression with only one value in range."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2.5, 3.5, closed="both")
+        nw_expr = expr.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        assert len(result) == 1
+        assert result["x"].to_list() == [3]
+
+    def test_ternary_expression_can_combine_with_and(self):
+        """Test that TernaryExpression can be combined with & operator."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr1 = TernaryExpression(x, 2, 8, closed="both")
+        expr2 = Expression(x, "!=", 5)
+        
+        composite = expr1 & expr2
+        
+        assert isinstance(composite, CompositeExpression)
+        assert composite.logic == "AND"
+
+    def test_ternary_expression_can_combine_with_or(self):
+        """Test that TernaryExpression can be combined with | operator."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr1 = TernaryExpression(x, 2, 4, closed="both")
+        expr2 = TernaryExpression(x, 7, 9, closed="both")
+        
+        composite = expr1 | expr2
+        
+        assert isinstance(composite, CompositeExpression)
+        assert composite.logic == "OR"
+
+    def test_ternary_expression_combined_and_filters_correctly(self):
+        """Test that combined TernaryExpression with AND filters correctly."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        # 2 <= x <= 8 AND x != 5
+        expr1 = TernaryExpression(x, 2, 8, closed="both")
+        expr2 = Expression(x, "!=", 5)
+        
+        composite = expr1 & expr2
+        nw_expr = composite.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        expected = [2, 3, 4, 6, 7, 8]
+        assert result["x"].to_list() == expected
+
+    def test_ternary_expression_combined_or_filters_correctly(self):
+        """Test that combined TernaryExpression with OR filters correctly."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        # (2 <= x <= 4) OR (7 <= x <= 9)
+        expr1 = TernaryExpression(x, 2, 4, closed="both")
+        expr2 = TernaryExpression(x, 7, 9, closed="both")
+        
+        composite = expr1 | expr2
+        nw_expr = composite.to_narwhals_expr()
+        
+        nw_df = nw.from_native(df)
+        result = nw_df.filter(nw_expr)
+        
+        expected = [2, 3, 4, 7, 8, 9]
+        assert result["x"].to_list() == expected
+
+    def test_ternary_expression_inherits_from_expression(self):
+        """Test that TernaryExpression is a subclass of Expression."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4)
+        
+        assert isinstance(expr, Expression)
+
+    def test_ternary_expression_operator_is_between(self):
+        """Test that TernaryExpression uses BETWEEN operator."""
+        df = pd.DataFrame({"x": [1, 2, 3, 4, 5]})
+        vb = VariableBuilder.from_data(df)
+        x = vb.get_variables("x")
+        
+        from src.poffertjes.expression import TernaryExpression
+        expr = TernaryExpression(x, 2, 4)
+        
+        assert expr.operator == ExpressionOp.BETWEEN
 
 
 class TestExpressionIntegration:
