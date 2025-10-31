@@ -260,7 +260,7 @@ class Expression:
         elif self.operator == ExpressionOp.GE:
             return col >= self.value
         elif self.operator == ExpressionOp.BETWEEN:
-            return col.is_between(self.value, self.upper_bound, closed="neither")
+            return col.is_between(self.value, self.upper_bound, closed="none")
         elif self.operator == ExpressionOp.IN:
             return col.is_in(self.value)  # value should be a list/set
         else:
@@ -294,9 +294,9 @@ class CompositeExpression:
 class TernaryExpression(Expression):
     """Represents a ternary expression like a < x < b."""
     
-    def __init__(self, variable: Variable, lower: Any, upper: Any, closed: str = "neither") -> None:
+    def __init__(self, variable: Variable, lower: Any, upper: Any, closed: str = "none") -> None:
         super().__init__(variable, ExpressionOp.BETWEEN, lower, upper)
-        self.closed = closed  # "neither", "left", "right", "both"
+        self.closed = closed  # "none", "left", "right", "both"
     
     def to_narwhals_expr(self) -> Any:
         """Convert to Narwhals is_between expression."""

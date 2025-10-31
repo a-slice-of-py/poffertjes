@@ -42,12 +42,14 @@ This implementation plan breaks down the probabilistic query interface into incr
 - [ ] 3. Implement Expression system
   - [x] 3.1 Create ExpressionOp enum
 
-
     - Define all operators (EQ, NE, LT, LE, GT, GE, BETWEEN, IN)
     - Write unit tests for enum
     - _Requirements: 9.1, 9.2, 9.3, 9.4_
   
-  - [ ] 3.2 Create Expression class
+  - [x] 3.2 Create Expression class
+
+
+
     - Implement `__init__(variable, operator, value, upper_bound)`
     - Implement `to_narwhals_expr()` method using native Narwhals expressions
     - Implement `__and__` and `__or__` for combining expressions
