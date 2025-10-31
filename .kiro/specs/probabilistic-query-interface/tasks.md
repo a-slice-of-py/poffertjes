@@ -15,7 +15,7 @@ This implementation plan breaks down the probabilistic query interface into incr
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ] 2. Implement Variable and VariableBuilder classes
-  - [-] 2.1 Create Variable class with basic structure
+  - [x] 2.1 Create Variable class with basic structure
 
 
     - Implement `__init__(name, nw_frame, frame_id)`
