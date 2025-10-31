@@ -8,6 +8,7 @@ requires-python = ">=3.13"
 dependencies = [
     "loguru>=0.7.3",
     "marimo>=0.13.10",
+    "narwhals>=1.0.0",
     "pandas>=2.2.3",
     "pyarrow>=20.0.0",
     "ruff>=0.11.10",
@@ -15,6 +16,12 @@ dependencies = [
 
 [project.scripts]
 poffertjes = "poffertjes:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "hypothesis>=6.0.0",
+]
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

@@ -6,7 +6,8 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 ## Tasks
 
-- [ ] 1. Set up project dependencies and structure
+- [x] 1. Set up project dependencies and structure
+
   - Add narwhals to pyproject.toml dependencies
   - Add pytest and hypothesis to dev dependencies
   - Create src/poffertjes module structure
@@ -14,7 +15,9 @@ This implementation plan breaks down the probabilistic query interface into incr
   - _Requirements: 1.1, 1.2, 1.3_
 
 - [ ] 2. Implement Variable and VariableBuilder classes
-  - [ ] 2.1 Create Variable class with basic structure
+  - [-] 2.1 Create Variable class with basic structure
+
+
     - Implement `__init__(name, nw_frame, frame_id)`
     - Implement `__repr__` and `__str__` methods
     - Implement `dataframe_id` property
@@ -232,7 +235,7 @@ This implementation plan breaks down the probabilistic query interface into incr
     - _Requirements: 12.4_
   
   - [ ] 11.4 Test Bayes' theorem
-    - Verify P(X|Y) * P(Y) = P(Y|X) * P(X)
+    - Verify `P(X|Y) * P(Y) = P(Y|X) * P(X)`
     - _Requirements: 12.5_
   
   - [ ] 11.5 Test law of total probability
