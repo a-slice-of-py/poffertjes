@@ -695,6 +695,244 @@ class TestCalculateScalar:
         assert abs(prob - 1/5) < 1e-10  # One row matches both conditions
 
 
+class TestCalculateJoint:
+    """Test the calculate_joint method for joint probability distributions (Task 6.5)."""
+    
+    def setup_method(self):
+        """Set up test data for joint probability tests."""
+        # Create test dataframe with known joint distributions
+        self.df = pd.DataFrame({
+            'x': [1, 1, 2, 2, 2, 3],  # 1: 2/6, 2: 3/6, 3: 1/6
+            'y': ['a', 'b', 'a', 'a', 'b', 'a'],  # a: 4/6, b: 2/6
+            'z': [10, 20, 10, 20, 10, 30]  # 10: 3/6, 20: 2/6, 30: 1/6
+        })
+        self.nw_df = nw.from_native(self.df)
+        self.calc = ProbabilityCalculator(self.nw_df)
+        
+        # Create variables
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(self.df)
+        self.x, self.y, self.z = vb.get_variables('x', 'y', 'z')
+    
+    def test_joint_two_variables(self):
+        """Test joint probability P(X,Y) for two variables."""
+        # Calculate P(X,Y) using calculate_joint
+        result = self.calc.calculate_joint([self.x, self.y])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'y' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify probabilities sum to 1.0 (requirement 11.5)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify we have the expected combinations (requirement 11.3)
+        # From our data: (1,'a'):1, (1,'b'):1, (2,'a'):2, (2,'b'):1, (3,'a'):1
+        expected_combinations = {(1, 'a'), (1, 'b'), (2, 'a'), (2, 'b'), (3, 'a')}
+        actual_combinations = set(zip(result_native['x'], result_native['y']))
+        assert actual_combinations == expected_combinations
+        
+        # Verify specific joint probabilities (requirement 11.1, 11.2)
+        result_dict = {}
+        for _, row in result_native.iterrows():
+            result_dict[(row['x'], row['y'])] = row['probability']
+        
+        assert abs(result_dict[(1, 'a')] - 1/6) < 1e-10  # P(X=1,Y='a') = 1/6
+        assert abs(result_dict[(1, 'b')] - 1/6) < 1e-10  # P(X=1,Y='b') = 1/6
+        assert abs(result_dict[(2, 'a')] - 2/6) < 1e-10  # P(X=2,Y='a') = 2/6
+        assert abs(result_dict[(2, 'b')] - 1/6) < 1e-10  # P(X=2,Y='b') = 1/6
+        assert abs(result_dict[(3, 'a')] - 1/6) < 1e-10  # P(X=3,Y='a') = 1/6
+    
+    def test_joint_three_variables(self):
+        """Test joint probability P(X,Y,Z) for three variables."""
+        # Calculate P(X,Y,Z) using calculate_joint
+        result = self.calc.calculate_joint([self.x, self.y, self.z])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'y' in result_native.columns
+        assert 'z' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify probabilities sum to 1.0 (requirement 11.5)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Each row in original data should be a unique combination (requirement 11.3)
+        assert len(result_native) == 6  # All rows are unique combinations
+        
+        # Each combination should have probability 1/6 (requirement 11.1)
+        for _, row in result_native.iterrows():
+            assert abs(row['probability'] - 1/6) < 1e-10
+    
+    def test_joint_with_conditions(self):
+        """Test conditional joint probability P(X,Y|Z=10)."""
+        from poffertjes.expression import Expression
+        
+        # Create condition Z = 10
+        condition = Expression(self.z, "==", 10)
+        
+        # Calculate P(X,Y|Z=10) using calculate_joint (requirement 11.4)
+        result = self.calc.calculate_joint([self.x, self.y], conditions=[condition])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'y' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify probabilities sum to 1.0 (conditional probabilities should normalize)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # From our data, when Z=10: (X,Y) combinations are [(1,'a'), (2,'a'), (2,'b')] (3 total)
+        # So P(X=1,Y='a'|Z=10) = 1/3, P(X=2,Y='a'|Z=10) = 1/3, P(X=2,Y='b'|Z=10) = 1/3
+        expected_combinations = {(1, 'a'), (2, 'a'), (2, 'b')}
+        actual_combinations = set(zip(result_native['x'], result_native['y']))
+        assert actual_combinations == expected_combinations
+        
+        # Verify specific conditional joint probabilities
+        result_dict = {}
+        for _, row in result_native.iterrows():
+            result_dict[(row['x'], row['y'])] = row['probability']
+        
+        assert abs(result_dict[(1, 'a')] - 1/3) < 1e-10
+        assert abs(result_dict[(2, 'a')] - 1/3) < 1e-10
+        assert abs(result_dict[(2, 'b')] - 1/3) < 1e-10
+    
+    def test_joint_with_multiple_conditions(self):
+        """Test conditional joint probability with multiple conditions P(Y,Z|X=2)."""
+        from poffertjes.expression import Expression
+        
+        # Create condition X = 2
+        condition = Expression(self.x, "==", 2)
+        
+        # Calculate P(Y,Z|X=2) using calculate_joint
+        result = self.calc.calculate_joint([self.y, self.z], conditions=[condition])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # From our data, when X=2: (Y,Z) combinations are [('a',10), ('a',20), ('b',10)] (3 total)
+        # So each should have probability 1/3
+        assert len(result_native) == 3
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify specific probabilities
+        result_dict = {}
+        for _, row in result_native.iterrows():
+            result_dict[(row['y'], row['z'])] = row['probability']
+        
+        assert abs(result_dict[('a', 10)] - 1/3) < 1e-10
+        assert abs(result_dict[('a', 20)] - 1/3) < 1e-10
+        assert abs(result_dict[('b', 10)] - 1/3) < 1e-10
+    
+    def test_joint_requires_multiple_variables(self):
+        """Test that calculate_joint requires at least 2 variables."""
+        # Should raise ValueError for single variable
+        with pytest.raises(ValueError, match="Joint probability calculation requires at least 2 variables"):
+            self.calc.calculate_joint([self.x])
+    
+    def test_joint_zero_probability_condition(self):
+        """Test that zero probability conditioning raises appropriate error."""
+        from poffertjes.expression import Expression
+        
+        # Create condition that matches no rows
+        condition = Expression(self.x, "==", 999)  # No x values are 999
+        
+        # Should raise ValueError for zero probability conditioning
+        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+            self.calc.calculate_joint([self.x, self.y], conditions=[condition])
+    
+    def test_joint_same_as_distribution_for_multiple_variables(self):
+        """Test that calculate_joint gives same results as calculate_distribution for multiple variables."""
+        # Calculate P(X,Y) using both methods
+        joint_result = self.calc.calculate_joint([self.x, self.y])
+        dist_result = self.calc.calculate_distribution([self.x, self.y])
+        
+        # Convert both to native for comparison
+        joint_native = joint_result.to_pandas() if hasattr(joint_result, 'to_pandas') else joint_result.to_native()
+        dist_native = dist_result.to_pandas() if hasattr(dist_result, 'to_pandas') else dist_result.to_native()
+        
+        # Sort both by x and y for consistent comparison
+        joint_sorted = joint_native.sort_values(['x', 'y']).reset_index(drop=True)
+        dist_sorted = dist_native.sort_values(['x', 'y']).reset_index(drop=True)
+        
+        # Should be identical
+        pd.testing.assert_frame_equal(joint_sorted, dist_sorted)
+    
+    def test_joint_empty_dataframe(self):
+        """Test joint calculation with empty dataframe."""
+        # Create empty dataframe
+        empty_df = pd.DataFrame({'x': [], 'y': [], 'z': []})
+        nw_empty = nw.from_native(empty_df)
+        calc = ProbabilityCalculator(nw_empty)
+        
+        # Create mock variables
+        from poffertjes.variable import Variable
+        x_var = Variable('x', nw_empty)
+        y_var = Variable('y', nw_empty)
+        
+        # Calculate joint distribution - should return empty result
+        result = calc.calculate_joint([x_var, y_var])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Should have correct structure but no rows
+        assert 'x' in result_native.columns
+        assert 'y' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        assert len(result_native) == 0
+    
+    @pytest.mark.skipif(not HAS_POLARS, reason="Polars not installed")
+    def test_joint_with_polars(self):
+        """Test that joint calculation works with Polars dataframes."""
+        # Create Polars dataframe
+        pl_df = pl.DataFrame({
+            'x': [1, 1, 2, 2, 3],
+            'y': ['a', 'b', 'a', 'b', 'a'],
+            'z': [10, 20, 10, 20, 30]
+        })
+        nw_df = nw.from_native(pl_df)
+        calc = ProbabilityCalculator(nw_df)
+        
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(pl_df)
+        x_var, y_var = vb.get_variables('x', 'y')
+        
+        # Calculate P(X,Y)
+        result = calc.calculate_joint([x_var, y_var])
+        
+        # Should work the same as with Pandas
+        # Convert to pandas for easier testing
+        result_pd = result.to_pandas()
+        
+        assert 'x' in result_pd.columns
+        assert 'y' in result_pd.columns
+        assert 'count' in result_pd.columns
+        assert 'probability' in result_pd.columns
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_pd['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+
+
 class TestConditionalProbabilities:
     """Comprehensive tests for conditional probability support (Task 6.4)."""
     

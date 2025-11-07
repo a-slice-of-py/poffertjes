@@ -120,7 +120,6 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 6.3 Implement scalar probability calculation
 
-
     - Implement `calculate_scalar(expressions, conditions=None)`
     - Use filter operations with Narwhals expressions
     - Write unit tests for scalar probabilities
@@ -129,14 +128,17 @@ This implementation plan breaks down the probabilistic query interface into incr
   - [x] 6.4 Implement conditional probability support
 
 
-
-
     - Add conditioning logic to both methods
     - Handle zero probability conditioning events
     - Write unit tests for conditional probabilities
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 6.5, 7.5_
   
-  - [ ] 6.5 Implement joint probability calculation
+  - [x] 6.5 Implement joint probability calculation
+
+
+
+
+
     - Implement `calculate_joint(variables, conditions=None)`
     - Use multi-column group_by
     - Write unit tests for joint probabilities
