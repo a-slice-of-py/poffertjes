@@ -144,26 +144,38 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Write unit tests for joint probabilities
     - _Requirements: 6.4, 7.4, 11.1, 11.2, 11.3, 11.4, 11.5_
 
-- [ ] 7. Implement result objects
-  - [ ] 7.1 Create QueryResult base class
+- [x] 7. Implement result objects
+
+
+
+
+  - [x] 7.1 Create QueryResult base class
+
+
     - Define abstract `given()` method
     - Write basic structure
     - _Requirements: 5.1_
   
-  - [ ] 7.2 Create ScalarResult class
+  - [x] 7.2 Create ScalarResult class
+
+
     - Implement `__init__(value, expressions, dataframe)`
     - Implement `__float__` and `__repr__`
     - Implement `given()` method for conditional probabilities
     - Write unit tests for ScalarResult
     - _Requirements: 4.2, 5.2, 9.6, 15.7_
   
-  - [ ] 7.3 Create DistributionResult class
+  - [x] 7.3 Create DistributionResult class
+
+
     - Implement `__init__(distribution, variables, dataframe, conditions)`
     - Implement `given()` method for conditional distributions
     - Write unit tests for DistributionResult
     - _Requirements: 4.1, 5.1, 5.3, 5.4, 5.5, 5.6, 9.1_
   
-  - [ ] 7.4 Implement Distribution class
+  - [x] 7.4 Implement Distribution class
+
+
     - Implement `__init__(data, variables)`
     - Implement `__iter__` for (value, probability) pairs
     - Implement `__repr__` with readable formatting
