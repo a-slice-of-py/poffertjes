@@ -51,10 +51,12 @@ class TestPCallMethod:
         vb = VariableBuilder.from_data(df)
         x = vb.get_variables('x')
         
-        # Validation should pass, but execution will fail because QueryBuilder is not implemented
+        # Validation should pass, and QueryBuilder should return placeholder result
         # This tests that the validation logic works correctly
-        with pytest.raises((ImportError, AttributeError, NotImplementedError)):
-            result = p(x)
+        result = p(x)
+        # QueryBuilder is now implemented and returns placeholder strings
+        assert isinstance(result, str)
+        assert "DistributionQuery" in result
 
     def test_call_with_single_expression(self):
         """Test that p(x == value) validates correctly."""
@@ -62,9 +64,11 @@ class TestPCallMethod:
         vb = VariableBuilder.from_data(df)
         x = vb.get_variables('x')
         
-        # Validation should pass, but execution will fail because QueryBuilder is not implemented
-        with pytest.raises((ImportError, AttributeError, NotImplementedError)):
-            result = p(x == 1)
+        # Validation should pass, and QueryBuilder should return placeholder result
+        result = p(x == 1)
+        # QueryBuilder is now implemented and returns placeholder strings
+        assert isinstance(result, str)
+        assert "ScalarQuery" in result
 
     def test_call_with_multiple_variables(self):
         """Test that p(x, y) validates correctly."""
@@ -72,9 +76,11 @@ class TestPCallMethod:
         vb = VariableBuilder.from_data(df)
         x, y = vb.get_variables('x', 'y')
         
-        # Validation should pass, but execution will fail because QueryBuilder is not implemented
-        with pytest.raises((ImportError, AttributeError, NotImplementedError)):
-            result = p(x, y)
+        # Validation should pass, and QueryBuilder should return placeholder result
+        result = p(x, y)
+        # QueryBuilder is now implemented and returns placeholder strings
+        assert isinstance(result, str)
+        assert "DistributionQuery" in result
 
 
 class TestPVariableExtraction:
@@ -217,9 +223,11 @@ class TestPIntegrationWithVariables:
         vb = VariableBuilder.from_data(df)
         x = vb.get_variables('x')
         
-        # Should not raise validation errors (execution will fail until QueryBuilder is implemented)
-        with pytest.raises((ImportError, AttributeError, NotImplementedError)):
-            p(x)
+        # Should not raise validation errors, QueryBuilder should return placeholder result
+        result = p(x)
+        # QueryBuilder is now implemented and returns placeholder strings
+        assert isinstance(result, str)
+        assert "DistributionQuery" in result
 
     def test_p_rejects_mixed_dataframe_variables_before_execution(self):
         """Test that p() rejects variables from different dataframes during validation.
@@ -325,9 +333,11 @@ class TestPImportIntegration:
         vb = VariableBuilder.from_data(df)
         x, y = vb.get_variables('x', 'y')
         
-        # Verify p is callable with variables (execution will fail until QueryBuilder is implemented)
-        with pytest.raises((ImportError, AttributeError, NotImplementedError)):
-            user_p(x)
+        # Verify p is callable with variables, QueryBuilder should return placeholder result
+        result = user_p(x)
+        # QueryBuilder is now implemented and returns placeholder strings
+        assert isinstance(result, str)
+        assert "DistributionQuery" in result
         
         # Verify validation works
         df2 = pd.DataFrame({'z': [8, 9, 10]})

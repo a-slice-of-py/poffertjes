@@ -84,19 +84,21 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 4.3 Create and export p singleton instance
 
-
     - Create p instance in __init__.py
     - Write integration tests for `from poffertjes import p`
     - _Requirements: 2.1, 14.6_
 
 - [ ] 5. Implement QueryBuilder
-  - [ ] 5.1 Create QueryBuilder class
+  - [x] 5.1 Create QueryBuilder class
+
     - Implement `__init__(args)` and `_parse_args()`
     - Parse arguments into variables and expressions
     - Write unit tests for argument parsing
     - _Requirements: 4.1, 4.2, 9.1_
   
-  - [ ] 5.2 Implement query execution logic
+  - [x] 5.2 Implement query execution logic
+
+
     - Implement `execute()` method
     - Determine scalar vs distribution queries
     - Write unit tests for query execution routing
