@@ -129,40 +129,31 @@ class QueryBuilder:
             
         Raises:
             ValueError: If no arguments were provided or if dataframes don't match
-            
-        Note:
-            This method currently returns placeholder values since the result classes
-            and calculator are implemented in later tasks. The logic structure is
-            correct and will work once those components are available.
         """
         if not self.variables:
             raise VariableError("No variables found in query arguments")
             
         # Get the dataframe from the first variable for execution
         # All variables should be from the same dataframe (validated by P class)
-        # dataframe = self.variables[0]._nw_frame  # Will be used when ProbabilityCalculator is implemented
+        dataframe = self.variables[0]._nw_frame
+        
+        # Import here to avoid circular imports
+        from poffertjes.calculator import ProbabilityCalculator
+        from poffertjes.result import ScalarResult, DistributionResult
         
         # Determine query type based on presence of expressions
         has_expressions = len(self.expressions) > 0
         
         if has_expressions:
             # Scalar query: p(x == 5), p(x > 10), p(x == 1, y == 2), etc.
-            # TODO: Implement when ProbabilityCalculator is available (task 6)
-            # calculator = ProbabilityCalculator(dataframe)
-            # prob = calculator.calculate_scalar(self.expressions)
-            # return ScalarResult(prob, self.expressions, dataframe)
-            
-            # Placeholder return for now
-            return f"ScalarQuery(expressions={self.expressions})"
+            calculator = ProbabilityCalculator(dataframe)
+            prob = calculator.calculate_scalar(self.expressions)
+            return ScalarResult(prob, self.expressions, dataframe)
         else:
             # Distribution query: p(x), p(x, y), etc.
-            # TODO: Implement when ProbabilityCalculator is available (task 6)
-            # calculator = ProbabilityCalculator(dataframe)
-            # dist = calculator.calculate_distribution(self.variables)
-            # return DistributionResult(dist, self.variables, dataframe)
-            
-            # Placeholder return for now
-            return f"DistributionQuery(variables={self.variables})"
+            calculator = ProbabilityCalculator(dataframe)
+            dist = calculator.calculate_distribution(self.variables)
+            return DistributionResult(dist, self.variables, dataframe)
 
     @property
     def is_scalar_query(self) -> bool:

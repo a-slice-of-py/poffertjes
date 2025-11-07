@@ -203,10 +203,9 @@ class TestQueryBuilder:
         qb = QueryBuilder((x, y))
         result = qb.execute()
         
-        # Should return placeholder string for now
-        assert isinstance(result, str)
-        assert "DistributionQuery" in result
-        assert "variables=" in result
+        # Should return actual DistributionResult now
+        from poffertjes.result import DistributionResult
+        assert isinstance(result, DistributionResult)
 
     def test_execute_scalar_query_placeholder(self, variables_pandas):
         """Test execute method for scalar queries (placeholder implementation)."""
@@ -216,10 +215,9 @@ class TestQueryBuilder:
         qb = QueryBuilder((expr,))
         result = qb.execute()
         
-        # Should return placeholder string for now
-        assert isinstance(result, str)
-        assert "ScalarQuery" in result
-        assert "expressions=" in result
+        # Should return actual ScalarResult now
+        from poffertjes.result import ScalarResult
+        assert isinstance(result, ScalarResult)
 
     def test_execute_no_variables_error(self):
         """Test that execute raises error when no variables are found."""

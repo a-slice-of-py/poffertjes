@@ -174,7 +174,6 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 - [x] 8. Implement error handling
 
-
   - [x] 8.1 Create exception hierarchy
 
     - Create PoffertjesError base class
@@ -190,17 +189,12 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 - [x] 9. Add multi-dtype support
 
-
-
-
   - [x] 9.1 Test with integer columns
-
 
     - Write integration tests with int dtype
     - _Requirements: 8.1_
   
   - [x] 9.2 Test with float columns
-
 
     - Write integration tests with float dtype
     - Handle floating point precision
@@ -208,54 +202,56 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 9.3 Test with categorical/string columns
 
-
     - Write integration tests with string dtype
     - Test `isin()` method
     - _Requirements: 8.3_
   
   - [x] 9.4 Test with boolean columns
 
-
     - Write integration tests with bool dtype
     - _Requirements: 8.4_
   
   - [x] 9.5 Test with datetime columns
-
 
     - Write integration tests with datetime dtype
     - _Requirements: 8.5_
   
   - [x] 9.6 Test dtype-appropriate comparisons
 
-
     - Write tests for all comparison operators across dtypes
     - _Requirements: 8.6_
 
-- [ ] 10. Add comprehensive integration tests
+- [x] 10. Add comprehensive integration tests
 
-  - [ ] 10.1 Test end-to-end marginal probability workflows
+
+  - [x] 10.1 Test end-to-end marginal probability workflows
+
     - Test `p(x)` returning distributions
     - Test `p(x == value)` returning scalars
     - Test with both Pandas and Polars
     - _Requirements: 1.1, 1.2, 4.1, 4.2, 4.3, 4.4_
   
-  - [ ] 10.2 Test end-to-end conditional probability workflows
+  - [x] 10.2 Test end-to-end conditional probability workflows
+
     - Test `p(x).given(y)` and `p(x).given(y == value)`
     - Test multiple conditioning variables
     - Test with both Pandas and Polars
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
   
-  - [ ] 10.3 Test end-to-end joint probability workflows
+  - [x] 10.3 Test end-to-end joint probability workflows
+
     - Test `p(x, y)` and `p(x == v1, y == v2)`
     - Test conditional joint distributions
     - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5_
   
-  - [ ] 10.4 Test ternary conditions
+  - [x] 10.4 Test ternary conditions
+
     - Test `p(a < x < b)` syntax
     - Test with `given()` method
     - _Requirements: 9.4_
   
-  - [ ] 10.5 Test result export functionality
+  - [x] 10.5 Test result export functionality
+
     - Test `.to_dict()` and `.to_dataframe()` methods
     - Verify native format conversion
     - _Requirements: 15.1, 15.2, 15.6_

@@ -21,6 +21,7 @@ poffertjes = "poffertjes:main"
 dev = [
     "pytest>=8.0.0",
     "hypothesis>=6.0.0",
+    "polars>=1.0.0",
 ]
 
 [build-system]
@@ -29,3 +30,8 @@ build-backend = "hatchling.build"
 
 [tool.hatch.version]
 source = "vcs"
+
+[dependency-groups]
+dev = [
+    "polars>=1.35.1",
+]

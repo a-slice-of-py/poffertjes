@@ -10,7 +10,7 @@ def _():
     import numpy as np
     from poffertjes.variable import VariableBuilder
     from poffertjes import p
-    return VariableBuilder, np, p, pd
+    return VariableBuilder, np, pd
 
 
 @app.cell
@@ -44,12 +44,11 @@ def _(VariableBuilder, df):
 @app.cell
 def _(builder):
     x, y = builder.get_variables("x", "y")
-    return (x,)
+    return
 
 
 @app.cell
-def _(p, x):
-    p(x==2)
+def _():
     return
 
 
