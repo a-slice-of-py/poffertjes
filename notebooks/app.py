@@ -8,13 +8,14 @@ app = marimo.App(width="medium")
 def _():
     import pandas as pd
     import numpy as np
-    from poffertjes.variable import Variable, VariableBuilder
-    return VariableBuilder, np, pd
+    from poffertjes.variable import VariableBuilder
+    from poffertjes import p
+    return VariableBuilder, np, p, pd
 
 
 @app.cell
 def _(np, pd):
-    N_SAMPLES = 100
+    N_SAMPLES = 10
     columns = ["x", "y", "z", "u"]
 
     df = pd.DataFrame(
@@ -42,19 +43,13 @@ def _(VariableBuilder, df):
 
 @app.cell
 def _(builder):
-    x = builder.get_variables("x")
+    x, y = builder.get_variables("x", "y")
     return (x,)
 
 
 @app.cell
-def _(x):
-    expr = x == 14
-    return (expr,)
-
-
-@app.cell
-def _(expr):
-    expr
+def _(p, x):
+    p(x==2)
     return
 
 

@@ -3,6 +3,8 @@
 from typing import Any, List, Optional, Union, TYPE_CHECKING
 import narwhals as nw
 
+from poffertjes.exceptions import ProbabilityError, DataframeError
+
 if TYPE_CHECKING:
     from poffertjes.variable import Variable
     from poffertjes.expression import Expression, CompositeExpression
@@ -91,7 +93,7 @@ class ProbabilityCalculator:
             # This satisfies requirement 5.7: raise clear error when conditioning event has zero occurrences
             conditional_count = len(df)
             if conditional_count == 0:
-                raise ValueError(
+                raise ProbabilityError(
                     "Conditioning event has zero probability - no rows match the given conditions"
                 )
 
@@ -185,7 +187,7 @@ class ProbabilityCalculator:
             # This satisfies requirement 5.7: raise clear error when conditioning event has zero occurrences
             denominator = len(df)
             if denominator == 0:
-                raise ValueError(
+                raise ProbabilityError(
                     "Conditioning event has zero probability - no rows match the given conditions"
                 )
         else:
@@ -247,7 +249,7 @@ class ProbabilityCalculator:
         # Joint probability calculation is the same as distribution calculation
         # but we make it explicit that this is for multiple variables
         if len(variables) < 2:
-            raise ValueError(
+            raise ProbabilityError(
                 "Joint probability calculation requires at least 2 variables. "
                 "Use calculate_distribution for single variable distributions."
             )

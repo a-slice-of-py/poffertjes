@@ -5,6 +5,7 @@ import pandas as pd
 
 from poffertjes.p_interface import P, p
 from poffertjes.variable import VariableBuilder
+from poffertjes.exceptions import DataframeError, VariableError
 
 
 class TestPSingleton:
@@ -42,7 +43,7 @@ class TestPCallMethod:
 
     def test_call_with_no_arguments_raises_error(self):
         """Test that calling p() with no arguments raises ValueError."""
-        with pytest.raises(ValueError, match="requires at least one argument"):
+        with pytest.raises(VariableError, match="requires at least one argument"):
             p()
 
     def test_call_validates_before_query_execution(self):
@@ -181,7 +182,7 @@ class TestPDataframeValidation:
         x = vb1.get_variables('x')
         y = vb2.get_variables('y')
         
-        with pytest.raises(ValueError, match="different dataframes cannot be mixed"):
+        with pytest.raises(DataframeError, match="different dataframes cannot be mixed"):
             p._validate_same_dataframe([x, y])
 
     def test_validate_error_message_includes_variable_names(self):
@@ -195,7 +196,7 @@ class TestPDataframeValidation:
         x = vb1.get_variables('x')
         y = vb2.get_variables('y')
         
-        with pytest.raises(ValueError, match="'x'.*'y'"):
+        with pytest.raises(DataframeError, match="'x'.*'y'"):
             p._validate_same_dataframe([x, y])
 
     def test_validate_three_variables_two_dataframes(self):
@@ -210,7 +211,7 @@ class TestPDataframeValidation:
         z = vb2.get_variables('z')
         
         # x and y are from same dataframe, but z is from different one
-        with pytest.raises(ValueError, match="different dataframes cannot be mixed"):
+        with pytest.raises(DataframeError, match="different dataframes cannot be mixed"):
             p._validate_same_dataframe([x, y, z])
 
 
@@ -244,8 +245,8 @@ class TestPIntegrationWithVariables:
         x = vb1.get_variables('x')
         y = vb2.get_variables('y')
         
-        # Should raise ValueError about mixed dataframes, not ImportError
-        with pytest.raises(ValueError, match="different dataframes"):
+        # Should raise DataframeError about mixed dataframes, not ImportError
+        with pytest.raises(DataframeError, match="different dataframes"):
             p(x, y)
 
 
@@ -313,7 +314,7 @@ class TestPImportIntegration:
         assert callable(imported_p)
         
         # Verify calling it invokes __call__ (will fail without arguments)
-        with pytest.raises(ValueError, match="requires at least one argument"):
+        with pytest.raises(VariableError, match="requires at least one argument"):
             imported_p()
 
     def test_import_p_works_in_user_code_pattern(self):
@@ -344,7 +345,7 @@ class TestPImportIntegration:
         vb2 = VariableBuilder.from_data(df2)
         z = vb2.get_variables('z')
         
-        with pytest.raises(ValueError, match="different dataframes"):
+        with pytest.raises(DataframeError, match="different dataframes"):
             user_p(x, z)
 
     def test_import_p_available_in_all_attribute(self):

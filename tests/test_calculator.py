@@ -4,6 +4,7 @@ import pytest
 import pandas as pd
 import narwhals as nw
 from poffertjes.calculator import ProbabilityCalculator
+from poffertjes.exceptions import ProbabilityError
 
 # Try to import polars, skip tests if not available
 try:
@@ -286,8 +287,8 @@ class TestCalculateDistribution:
         # Create condition that matches no rows
         condition = Expression(self.x, "==", 999)  # No x values are 999
         
-        # Should raise ValueError for zero probability conditioning
-        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+        # Should raise ProbabilityError for zero probability conditioning
+        with pytest.raises(ProbabilityError, match="Conditioning event has zero probability"):
             self.calc.calculate_distribution([self.y], conditions=[condition])
     
     def test_distribution_empty_dataframe(self):
@@ -612,8 +613,8 @@ class TestCalculateScalar:
         expr = Expression(self.x, "==", 1)
         condition = Expression(self.x, "==", 999)  # No x values are 999
         
-        # Should raise ValueError for zero probability conditioning
-        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+        # Should raise ProbabilityError for zero probability conditioning
+        with pytest.raises(ProbabilityError, match="Conditioning event has zero probability"):
             self.calc.calculate_scalar([expr], conditions=[condition])
     
     def test_scalar_with_empty_dataframe(self):
@@ -845,8 +846,8 @@ class TestCalculateJoint:
     
     def test_joint_requires_multiple_variables(self):
         """Test that calculate_joint requires at least 2 variables."""
-        # Should raise ValueError for single variable
-        with pytest.raises(ValueError, match="Joint probability calculation requires at least 2 variables"):
+        # Should raise ProbabilityError for single variable
+        with pytest.raises(ProbabilityError, match="Joint probability calculation requires at least 2 variables"):
             self.calc.calculate_joint([self.x])
     
     def test_joint_zero_probability_condition(self):
@@ -856,8 +857,8 @@ class TestCalculateJoint:
         # Create condition that matches no rows
         condition = Expression(self.x, "==", 999)  # No x values are 999
         
-        # Should raise ValueError for zero probability conditioning
-        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+        # Should raise ProbabilityError for zero probability conditioning
+        with pytest.raises(ProbabilityError, match="Conditioning event has zero probability"):
             self.calc.calculate_joint([self.x, self.y], conditions=[condition])
     
     def test_joint_same_as_distribution_for_multiple_variables(self):
@@ -1105,8 +1106,8 @@ class TestConditionalProbabilities:
         # Create condition that matches no rows
         condition = Expression(self.x, "==", 999)  # No x values are 999
         
-        # Should raise ValueError with clear message
-        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+        # Should raise ProbabilityError with clear message
+        with pytest.raises(ProbabilityError, match="Conditioning event has zero probability"):
             self.calc.calculate_distribution([self.y], conditions=[condition])
     
     def test_zero_probability_conditioning_scalar(self):
@@ -1117,8 +1118,8 @@ class TestConditionalProbabilities:
         expr = Expression(self.x, "==", 1)
         condition = Expression(self.x, "==", 999)  # No x values are 999
         
-        # Should raise ValueError with clear message
-        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+        # Should raise ProbabilityError with clear message
+        with pytest.raises(ProbabilityError, match="Conditioning event has zero probability"):
             self.calc.calculate_scalar([expr], conditions=[condition])
     
     def test_conditional_probability_axioms(self):

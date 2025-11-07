@@ -127,17 +127,12 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 6.4 Implement conditional probability support
 
-
     - Add conditioning logic to both methods
     - Handle zero probability conditioning events
     - Write unit tests for conditional probabilities
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8, 6.5, 7.5_
   
   - [x] 6.5 Implement joint probability calculation
-
-
-
-
 
     - Implement `calculate_joint(variables, conditions=None)`
     - Use multi-column group_by
@@ -146,18 +141,13 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 - [x] 7. Implement result objects
 
-
-
-
   - [x] 7.1 Create QueryResult base class
-
 
     - Define abstract `given()` method
     - Write basic structure
     - _Requirements: 5.1_
   
   - [x] 7.2 Create ScalarResult class
-
 
     - Implement `__init__(value, expressions, dataframe)`
     - Implement `__float__` and `__repr__`
@@ -167,14 +157,12 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 7.3 Create DistributionResult class
 
-
     - Implement `__init__(distribution, variables, dataframe, conditions)`
     - Implement `given()` method for conditional distributions
     - Write unit tests for DistributionResult
     - _Requirements: 4.1, 5.1, 5.3, 5.4, 5.5, 5.6, 9.1_
   
   - [x] 7.4 Implement Distribution class
-
 
     - Implement `__init__(data, variables)`
     - Implement `__iter__` for (value, probability) pairs
@@ -184,13 +172,17 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Write unit tests for Distribution
     - _Requirements: 9.2, 9.3, 9.4, 9.5, 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.8_
 
-- [ ] 8. Implement error handling
-  - [ ] 8.1 Create exception hierarchy
+- [x] 8. Implement error handling
+
+
+  - [x] 8.1 Create exception hierarchy
+
     - Create PoffertjesError base class
     - Create DataframeError, VariableError, ExpressionError, ProbabilityError
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5_
   
-  - [ ] 8.2 Add error handling throughout codebase
+  - [x] 8.2 Add error handling throughout codebase
+
     - Add descriptive error messages
     - Handle edge cases (empty dataframes, missing columns, zero probability)
     - Write unit tests for error cases

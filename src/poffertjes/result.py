@@ -6,6 +6,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Union, List, Dict, Iterator, Tuple, Optional, TYPE_CHECKING
 import narwhals as nw
 
+from poffertjes.exceptions import VariableError
+
 if TYPE_CHECKING:
     from poffertjes.expression import Expression, CompositeExpression
     from poffertjes.variable import Variable
@@ -95,7 +97,7 @@ class ScalarResult(QueryResult):
             elif isinstance(arg, Variable):
                 # Variable without expression means condition on all values
                 # This is handled differently in distribution case
-                raise ValueError(
+                raise VariableError(
                     "Scalar result cannot be conditioned on variable without expression. "
                     "Use an expression like y == value instead."
                 )
@@ -169,7 +171,7 @@ class DistributionResult(QueryResult):
             if isinstance(arg, (Expression, Variable)):
                 result.append(arg)
             else:
-                raise ValueError(f"Invalid conditioning argument: {arg}")
+                raise VariableError(f"Invalid conditioning argument: {arg}")
         return result
     
     def to_dict(self) -> Dict[Any, float]:

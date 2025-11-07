@@ -6,6 +6,7 @@ import narwhals as nw
 from poffertjes.result import DistributionResult
 from poffertjes.variable import VariableBuilder
 from poffertjes.expression import Expression
+from poffertjes.exceptions import VariableError
 
 
 class TestDistributionResult:
@@ -115,7 +116,7 @@ class TestDistributionResult:
         
         result = DistributionResult(nw_df, [x], nw.from_native(source_df))
         
-        with pytest.raises(ValueError, match="Invalid conditioning argument"):
+        with pytest.raises(VariableError, match="Invalid conditioning argument"):
             result._parse_conditioning_args(["invalid"])
     
     def test_to_dict_fallback(self):

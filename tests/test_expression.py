@@ -5,6 +5,7 @@ import pandas as pd
 import narwhals as nw
 from src.poffertjes.expression import ExpressionOp, Expression, CompositeExpression
 from src.poffertjes.variable import VariableBuilder
+from poffertjes.exceptions import ExpressionError
 
 
 class TestExpressionOp:
@@ -350,7 +351,7 @@ class TestExpressionToNarwhalsExpr:
         expr = Expression(x, "==", 5)
         expr.operator = "invalid"  # Bypass enum validation
         
-        with pytest.raises(ValueError, match="Unsupported operator"):
+        with pytest.raises(ExpressionError, match="Unsupported operator"):
             expr.to_narwhals_expr()
 
 
@@ -484,7 +485,7 @@ class TestCompositeExpression:
         expr1 = Expression(x, ">", 1)
         expr2 = Expression(x, "<", 3)
         
-        with pytest.raises(ValueError, match="Logic must be 'AND' or 'OR'"):
+        with pytest.raises(ExpressionError, match="Logic must be 'AND' or 'OR'"):
             CompositeExpression([expr1, expr2], "INVALID")
 
     def test_composite_expression_repr(self):
@@ -735,7 +736,7 @@ class TestTernaryExpression:
         
         from src.poffertjes.expression import TernaryExpression
         
-        with pytest.raises(ValueError, match="closed must be one of"):
+        with pytest.raises(ExpressionError, match="closed must be one of"):
             TernaryExpression(x, 2, 4, closed="invalid")
 
     def test_ternary_expression_repr_none(self):

@@ -1,9 +1,11 @@
 """Unit tests for Variable and VariableBuilder classes."""
 
+import pytest
 import pandas as pd
 import narwhals as nw
 from poffertjes.variable import Variable, VariableBuilder
 from poffertjes.expression import Expression, ExpressionOp
+from poffertjes.exceptions import DataframeError, VariableError
 
 
 class TestVariable:
@@ -253,15 +255,13 @@ class TestVariableOperatorOverloading:
         assert expr.operator == ExpressionOp.IN
 
     def test_isin_with_empty_list(self):
-        """Test isin() works with empty list."""
+        """Test isin() raises error with empty list."""
         df = pd.DataFrame({"x": [1, 2, 3]})
         nw_frame = nw.from_native(df)
         var = Variable("x", nw_frame)
 
-        expr = var.isin([])
-
-        assert expr.value == []
-        assert expr.operator == ExpressionOp.IN
+        with pytest.raises(VariableError, match="Cannot create 'isin' expression with empty values list"):
+            var.isin([])
 
     def test_expression_repr_for_equality(self):
         """Test that Expression has proper repr for equality."""
@@ -384,7 +384,7 @@ class TestVariableBuilder:
         import pytest
         df = pd.DataFrame({"x": [], "y": []})
 
-        with pytest.raises(ValueError, match="Cannot create variables from an empty dataframe"):
+        with pytest.raises(DataframeError, match="Cannot create variables from an empty dataframe"):
             VariableBuilder(df)
 
     def test_from_data_static_method(self):
@@ -444,7 +444,7 @@ class TestVariableBuilder:
         df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
         vb = VariableBuilder.from_data(df)
 
-        with pytest.raises(ValueError, match="Columns not found in dataframe: \\['z'\\]"):
+        with pytest.raises(VariableError, match="Columns not found in dataframe: \\['z'\\]"):
             vb.get_variables("x", "z")
 
     def test_get_variables_multiple_missing_columns_error(self):
@@ -453,7 +453,7 @@ class TestVariableBuilder:
         df = pd.DataFrame({"x": [1, 2, 3]})
         vb = VariableBuilder.from_data(df)
 
-        with pytest.raises(ValueError, match="Columns not found in dataframe"):
+        with pytest.raises(VariableError, match="Columns not found in dataframe"):
             vb.get_variables("a", "b", "c")
 
     def test_get_variables_error_shows_available_columns(self):
@@ -462,7 +462,7 @@ class TestVariableBuilder:
         df = pd.DataFrame({"x": [1, 2, 3], "y": [4, 5, 6]})
         vb = VariableBuilder.from_data(df)
 
-        with pytest.raises(ValueError, match="Available columns"):
+        with pytest.raises(VariableError, match="Available columns"):
             vb.get_variables("z")
 
     def test_variables_share_same_frame_reference(self):

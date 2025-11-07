@@ -7,6 +7,8 @@ from typing import Any, Union, List, TYPE_CHECKING
 
 import narwhals as nw
 
+from poffertjes.exceptions import ExpressionError
+
 if TYPE_CHECKING:
     from poffertjes.variable import Variable
 
@@ -132,9 +134,11 @@ class Expression:
             return col.is_between(self.value, self.upper_bound, closed="none")
         elif self.operator == ExpressionOp.IN:
             # Use is_in for categorical membership
+            if not self.value:  # Empty list
+                raise ExpressionError("Cannot use 'in' operator with empty list")
             return col.is_in(self.value)
         else:
-            raise ValueError(f"Unsupported operator: {self.operator}")
+            raise ExpressionError(f"Unsupported operator: {self.operator}")
 
 
 class TernaryExpression(Expression):
@@ -169,9 +173,19 @@ class TernaryExpression(Expression):
             ValueError: If closed is not one of the valid options
         """
         if closed not in ("none", "left", "right", "both"):
-            raise ValueError(
+            raise ExpressionError(
                 f"closed must be one of 'none', 'left', 'right', 'both', got: {closed}"
             )
+        
+        # Validate bounds make sense
+        try:
+            if lower >= upper:
+                raise ExpressionError(
+                    f"Lower bound ({lower}) must be less than upper bound ({upper})"
+                )
+        except TypeError:
+            # If bounds are not comparable, let Narwhals handle it
+            pass
 
         # Initialize parent with BETWEEN operator
         super().__init__(variable, ExpressionOp.BETWEEN, lower, upper)
@@ -233,7 +247,10 @@ class CompositeExpression:
             ValueError: If logic is not "AND" or "OR"
         """
         if logic not in ("AND", "OR"):
-            raise ValueError(f"Logic must be 'AND' or 'OR', got: {logic}")
+            raise ExpressionError(f"Logic must be 'AND' or 'OR', got: {logic}")
+        
+        if not expressions:
+            raise ExpressionError("CompositeExpression requires at least one expression")
 
         self.expressions = expressions
         self.logic = logic

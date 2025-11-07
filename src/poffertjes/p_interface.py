@@ -6,6 +6,7 @@ from typing import Union, List
 
 from poffertjes.variable import Variable
 from poffertjes.expression import Expression, CompositeExpression
+from poffertjes.exceptions import DataframeError, VariableError
 
 
 class P:
@@ -80,12 +81,12 @@ class P:
             >>> p(x).given(y == 2)  # P(X | Y=2)
         """
         if not args:
-            raise ValueError("p() requires at least one argument")
+            raise VariableError("p() requires at least one argument")
         
         # Validate all variables come from same dataframe
         variables = self._extract_variables(args)
         if not variables:
-            raise ValueError("No variables found in arguments")
+            raise VariableError("No variables found in arguments")
         
         self._validate_same_dataframe(variables)
         
@@ -161,7 +162,7 @@ class P:
         first_id = variables[0].dataframe_id
         for var in variables[1:]:
             if var.dataframe_id != first_id:
-                raise ValueError(
+                raise DataframeError(
                     f"Variables from different dataframes cannot be mixed: "
                     f"'{variables[0].name}' and '{var.name}' come from different dataframes"
                 )

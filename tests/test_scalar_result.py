@@ -6,6 +6,7 @@ import narwhals as nw
 from poffertjes.result import ScalarResult
 from poffertjes.variable import VariableBuilder
 from poffertjes.expression import Expression
+from poffertjes.exceptions import VariableError
 
 
 class TestScalarResult:
@@ -50,7 +51,7 @@ class TestScalarResult:
         
         result = ScalarResult(0.5)
         
-        with pytest.raises(ValueError, match="Scalar result cannot be conditioned on variable without expression"):
+        with pytest.raises(VariableError, match="Scalar result cannot be conditioned on variable without expression"):
             result.given(y)
     
     def test_given_with_expression(self):
@@ -102,5 +103,5 @@ class TestScalarResult:
         
         result = ScalarResult(0.5)
         
-        with pytest.raises(ValueError, match="Scalar result cannot be conditioned on variable without expression"):
+        with pytest.raises(VariableError, match="Scalar result cannot be conditioned on variable without expression"):
             result._parse_conditioning_args([y])

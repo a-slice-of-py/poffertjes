@@ -8,6 +8,7 @@ import narwhals as nw
 from narwhals.typing import IntoFrameT
 
 from poffertjes.expression import Expression
+from poffertjes.exceptions import DataframeError, VariableError
 
 
 class Variable:
@@ -140,10 +141,15 @@ class Variable:
         Returns:
             Expression representing variable in values
 
+        Raises:
+            VariableError: If values list is empty
+
         Examples:
             >>> x.isin(['cat1', 'cat2', 'cat3'])
             >>> x.isin([1, 2, 3])
         """
+        if not values:
+            raise VariableError("Cannot create 'isin' expression with empty values list")
         return Expression(self, "in", values)
 
 
@@ -168,7 +174,7 @@ class VariableBuilder:
 
         # Validate dataframe is not empty
         if len(self._nw_frame) == 0:
-            raise ValueError("Cannot create variables from an empty dataframe")
+            raise DataframeError("Cannot create variables from an empty dataframe")
 
         # Cache the dataframe identity
         self._id = id(self._nw_frame)
@@ -206,7 +212,7 @@ class VariableBuilder:
         # Validate columns exist
         missing = set(columns) - set(self._nw_frame.columns)
         if missing:
-            raise ValueError(
+            raise VariableError(
                 f"Columns not found in dataframe: {sorted(missing)}. "
                 f"Available columns: {sorted(self._nw_frame.columns)}"
             )

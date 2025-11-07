@@ -6,6 +6,7 @@ import pandas as pd
 from poffertjes.variable import VariableBuilder
 from poffertjes.query_builder import QueryBuilder
 from poffertjes.expression import Expression, CompositeExpression
+from poffertjes.exceptions import VariableError, ExpressionError
 
 # Try to import Polars, but make it optional
 try:
@@ -188,11 +189,11 @@ class TestQueryBuilder:
         assert len(qb.expressions) == 2
 
     def test_parse_args_invalid_argument_type(self, variables_pandas):
-        """Test that invalid argument types raise ValueError."""
-        with pytest.raises(ValueError, match="Invalid argument type"):
+        """Test that invalid argument types raise ExpressionError."""
+        with pytest.raises(ExpressionError, match="Invalid argument type"):
             QueryBuilder(("invalid_string",))
         
-        with pytest.raises(ValueError, match="Invalid argument type"):
+        with pytest.raises(ExpressionError, match="Invalid argument type"):
             QueryBuilder((42,))
 
     def test_execute_distribution_query_placeholder(self, variables_pandas):
@@ -226,7 +227,7 @@ class TestQueryBuilder:
         qb = QueryBuilder(())
         qb.variables = []  # Force empty variables list
         
-        with pytest.raises(ValueError, match="No variables found in query arguments"):
+        with pytest.raises(VariableError, match="No variables found in query arguments"):
             qb.execute()
 
     def test_query_type_properties(self, variables_pandas):
@@ -320,7 +321,7 @@ class TestQueryBuilder:
         assert qb.args == ()
         
         # Should raise error on execute
-        with pytest.raises(ValueError, match="No variables found"):
+        with pytest.raises(VariableError, match="No variables found"):
             qb.execute()
 
 

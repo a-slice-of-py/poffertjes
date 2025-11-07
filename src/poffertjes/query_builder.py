@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Any, List, Tuple, Union, TYPE_CHECKING
 
+from poffertjes.exceptions import VariableError, ExpressionError
+
 if TYPE_CHECKING:
     from poffertjes.variable import Variable
     from poffertjes.expression import Expression, CompositeExpression
@@ -75,7 +77,7 @@ class QueryBuilder:
                 # Extract variables from all sub-expressions
                 self._extract_variables_from_composite(arg)
             else:
-                raise ValueError(f"Invalid argument type: {type(arg)}. Expected Variable, Expression, or CompositeExpression.")
+                raise ExpressionError(f"Invalid argument type: {type(arg)}. Expected Variable, Expression, or CompositeExpression.")
 
     def _add_variable_if_not_present(self, variable: "Variable") -> None:
         """Add variable to variables list if not already present.
@@ -134,7 +136,7 @@ class QueryBuilder:
             correct and will work once those components are available.
         """
         if not self.variables:
-            raise ValueError("No variables found in query arguments")
+            raise VariableError("No variables found in query arguments")
             
         # Get the dataframe from the first variable for execution
         # All variables should be from the same dataframe (validated by P class)
