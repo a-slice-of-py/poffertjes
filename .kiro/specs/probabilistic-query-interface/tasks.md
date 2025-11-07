@@ -98,26 +98,31 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 5.2 Implement query execution logic
 
-
     - Implement `execute()` method
     - Determine scalar vs distribution queries
     - Write unit tests for query execution routing
     - _Requirements: 4.1, 4.2, 9.1_
 
 - [ ] 6. Implement ProbabilityCalculator
-  - [ ] 6.1 Create ProbabilityCalculator class structure
+  - [x] 6.1 Create ProbabilityCalculator class structure
+
     - Implement `__init__(dataframe)` with total count
     - Write basic unit tests
     - _Requirements: 6.1, 6.2_
   
-  - [ ] 6.2 Implement marginal probability distribution calculation
+  - [x] 6.2 Implement marginal probability distribution calculation
+
+
     - Implement `calculate_distribution(variables, conditions=None)`
     - Use `group_by().agg(nw.len())` pattern
     - Calculate probabilities by dividing by total
     - Write unit tests for marginal distributions
     - _Requirements: 4.1, 4.3, 4.4, 6.3, 6.4, 7.2, 7.3_
   
-  - [ ] 6.3 Implement scalar probability calculation
+  - [-] 6.3 Implement scalar probability calculation
+
+
+
     - Implement `calculate_scalar(expressions, conditions=None)`
     - Use filter operations with Narwhals expressions
     - Write unit tests for scalar probabilities

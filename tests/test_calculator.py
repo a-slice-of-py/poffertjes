@@ -1,5 +1,364 @@
 """Unit tests for ProbabilityCalculator."""
 
 import pytest
+import pandas as pd
+import narwhals as nw
+from poffertjes.calculator import ProbabilityCalculator
 
-# Tests will be added in task 6
+# Try to import polars, skip tests if not available
+try:
+    import polars as pl
+    HAS_POLARS = True
+except ImportError:
+    HAS_POLARS = False
+
+
+class TestProbabilityCalculatorStructure:
+    """Test the basic structure and initialization of ProbabilityCalculator."""
+    
+    def test_init_with_pandas_dataframe(self):
+        """Test initialization with a Pandas dataframe."""
+        # Create test data
+        df = pd.DataFrame({
+            'x': [1, 2, 3, 4, 5],
+            'y': ['a', 'b', 'a', 'b', 'a']
+        })
+        
+        # Convert to Narwhals frame
+        nw_df = nw.from_native(df)
+        
+        # Initialize calculator
+        calc = ProbabilityCalculator(nw_df)
+        
+        # Verify initialization
+        assert calc.df is nw_df
+        assert calc.total_count == 5
+    
+    @pytest.mark.skipif(not HAS_POLARS, reason="Polars not installed")
+    def test_init_with_polars_dataframe(self):
+        """Test initialization with a Polars dataframe."""
+        # Create test data
+        df = pl.DataFrame({
+            'x': [1, 2, 3, 4, 5],
+            'y': ['a', 'b', 'a', 'b', 'a']
+        })
+        
+        # Convert to Narwhals frame
+        nw_df = nw.from_native(df)
+        
+        # Initialize calculator
+        calc = ProbabilityCalculator(nw_df)
+        
+        # Verify initialization
+        assert calc.df is nw_df
+        assert calc.total_count == 5
+    
+    def test_init_with_empty_dataframe(self):
+        """Test initialization with an empty dataframe."""
+        # Create empty test data
+        df = pd.DataFrame({'x': [], 'y': []})
+        nw_df = nw.from_native(df)
+        
+        # Initialize calculator
+        calc = ProbabilityCalculator(nw_df)
+        
+        # Verify initialization
+        assert calc.df is nw_df
+        assert calc.total_count == 0
+    
+    def test_init_with_single_row_dataframe(self):
+        """Test initialization with a single-row dataframe."""
+        # Create single-row test data
+        df = pd.DataFrame({'x': [1], 'y': ['a']})
+        nw_df = nw.from_native(df)
+        
+        # Initialize calculator
+        calc = ProbabilityCalculator(nw_df)
+        
+        # Verify initialization
+        assert calc.df is nw_df
+        assert calc.total_count == 1
+    
+    def test_total_count_calculation(self):
+        """Test that total_count is calculated correctly for different dataframe sizes."""
+        # Test with various sizes
+        sizes = [0, 1, 5, 10, 100]
+        
+        for size in sizes:
+            df = pd.DataFrame({'x': list(range(size))})
+            nw_df = nw.from_native(df)
+            calc = ProbabilityCalculator(nw_df)
+            
+            assert calc.total_count == size, f"Failed for size {size}"
+
+
+class TestCalculateDistribution:
+    """Test the calculate_distribution method for marginal probability distributions."""
+    
+    def setup_method(self):
+        """Set up test data for distribution tests."""
+        # Create test dataframe with known distribution
+        self.df = pd.DataFrame({
+            'x': [1, 1, 2, 2, 2, 3],  # 1: 2/6, 2: 3/6, 3: 1/6
+            'y': ['a', 'b', 'a', 'a', 'b', 'a'],  # a: 4/6, b: 2/6
+            'z': [10, 20, 10, 20, 10, 30]  # 10: 3/6, 20: 2/6, 30: 1/6
+        })
+        self.nw_df = nw.from_native(self.df)
+        self.calc = ProbabilityCalculator(self.nw_df)
+        
+        # Create mock variables (we'll need to import Variable for real tests)
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(self.df)
+        self.x, self.y, self.z = vb.get_variables('x', 'y', 'z')
+    
+    def test_single_variable_distribution(self):
+        """Test marginal distribution P(X) for a single variable."""
+        # Calculate P(X)
+        result = self.calc.calculate_distribution([self.x])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify values - should have 3 unique values of x
+        assert len(result_native) == 3
+        
+        # Verify probabilities sum to 1.0 (requirement 4.4)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10, f"Probabilities sum to {prob_sum}, not 1.0"
+        
+        # Verify specific probabilities
+        result_dict = dict(zip(result_native['x'], result_native['probability']))
+        assert abs(result_dict[1] - 2/6) < 1e-10  # P(X=1) = 2/6
+        assert abs(result_dict[2] - 3/6) < 1e-10  # P(X=2) = 3/6
+        assert abs(result_dict[3] - 1/6) < 1e-10  # P(X=3) = 1/6
+    
+    def test_single_variable_distribution_categorical(self):
+        """Test marginal distribution P(Y) for a categorical variable."""
+        # Calculate P(Y)
+        result = self.calc.calculate_distribution([self.y])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'y' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify values - should have 2 unique values of y
+        assert len(result_native) == 2
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify specific probabilities
+        result_dict = dict(zip(result_native['y'], result_native['probability']))
+        assert abs(result_dict['a'] - 4/6) < 1e-10  # P(Y='a') = 4/6
+        assert abs(result_dict['b'] - 2/6) < 1e-10  # P(Y='b') = 2/6
+    
+    def test_joint_distribution_two_variables(self):
+        """Test joint distribution P(X,Y) for two variables."""
+        # Calculate P(X,Y)
+        result = self.calc.calculate_distribution([self.x, self.y])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'y' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify probabilities sum to 1.0 (requirement 4.4)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify we have the expected combinations
+        # From our data: (1,'a'):1, (1,'b'):1, (2,'a'):2, (2,'b'):1, (3,'a'):1
+        expected_combinations = {(1, 'a'), (1, 'b'), (2, 'a'), (2, 'b'), (3, 'a')}
+        actual_combinations = set(zip(result_native['x'], result_native['y']))
+        assert actual_combinations == expected_combinations
+        
+        # Verify specific joint probabilities
+        result_dict = {}
+        for _, row in result_native.iterrows():
+            result_dict[(row['x'], row['y'])] = row['probability']
+        
+        assert abs(result_dict[(1, 'a')] - 1/6) < 1e-10  # P(X=1,Y='a') = 1/6
+        assert abs(result_dict[(1, 'b')] - 1/6) < 1e-10  # P(X=1,Y='b') = 1/6
+        assert abs(result_dict[(2, 'a')] - 2/6) < 1e-10  # P(X=2,Y='a') = 2/6
+        assert abs(result_dict[(2, 'b')] - 1/6) < 1e-10  # P(X=2,Y='b') = 1/6
+        assert abs(result_dict[(3, 'a')] - 1/6) < 1e-10  # P(X=3,Y='a') = 1/6
+    
+    def test_joint_distribution_three_variables(self):
+        """Test joint distribution P(X,Y,Z) for three variables."""
+        # Calculate P(X,Y,Z)
+        result = self.calc.calculate_distribution([self.x, self.y, self.z])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'y' in result_native.columns
+        assert 'z' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Each row in original data should be a unique combination
+        assert len(result_native) == 6  # All rows are unique combinations
+        
+        # Each combination should have probability 1/6
+        for _, row in result_native.iterrows():
+            assert abs(row['probability'] - 1/6) < 1e-10
+    
+    def test_distribution_with_conditions(self):
+        """Test conditional distribution P(X|Y='a')."""
+        from poffertjes.expression import Expression
+        
+        # Create condition Y = 'a'
+        condition = Expression(self.y, "==", "a")
+        
+        # Calculate P(X|Y='a')
+        result = self.calc.calculate_distribution([self.x], conditions=[condition])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # Verify probabilities sum to 1.0 (conditional probabilities should normalize)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # From our data, when Y='a': X values are [1, 2, 2, 3] (4 total)
+        # So P(X=1|Y='a') = 1/4, P(X=2|Y='a') = 2/4, P(X=3|Y='a') = 1/4
+        result_dict = dict(zip(result_native['x'], result_native['probability']))
+        assert abs(result_dict[1] - 1/4) < 1e-10
+        assert abs(result_dict[2] - 2/4) < 1e-10
+        assert abs(result_dict[3] - 1/4) < 1e-10
+    
+    def test_distribution_with_multiple_conditions(self):
+        """Test conditional distribution with multiple conditions P(Z|X=2, Y='a')."""
+        from poffertjes.expression import Expression
+        
+        # Create conditions X = 2 AND Y = 'a'
+        condition1 = Expression(self.x, "==", 2)
+        condition2 = Expression(self.y, "==", "a")
+        
+        # Calculate P(Z|X=2, Y='a')
+        result = self.calc.calculate_distribution([self.z], conditions=[condition1, condition2])
+        
+        # Convert to native for easier testing
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # From our data, when X=2 AND Y='a': Z values are [10, 20] (2 total)
+        # So P(Z=10|X=2,Y='a') = 1/2, P(Z=20|X=2,Y='a') = 1/2
+        assert len(result_native) == 2
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify specific probabilities
+        result_dict = dict(zip(result_native['z'], result_native['probability']))
+        assert abs(result_dict[10] - 1/2) < 1e-10
+        assert abs(result_dict[20] - 1/2) < 1e-10
+    
+    def test_distribution_zero_probability_condition(self):
+        """Test that zero probability conditioning raises appropriate error."""
+        from poffertjes.expression import Expression
+        
+        # Create condition that matches no rows
+        condition = Expression(self.x, "==", 999)  # No x values are 999
+        
+        # Should raise ValueError for zero probability conditioning
+        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+            self.calc.calculate_distribution([self.y], conditions=[condition])
+    
+    def test_distribution_empty_dataframe(self):
+        """Test distribution calculation with empty dataframe."""
+        # Create empty dataframe
+        empty_df = pd.DataFrame({'x': [], 'y': []})
+        nw_empty = nw.from_native(empty_df)
+        calc = ProbabilityCalculator(nw_empty)
+        
+        # Create mock variable
+        from poffertjes.variable import Variable
+        x_var = Variable('x', nw_empty)
+        
+        # Calculate distribution - should return empty result
+        result = calc.calculate_distribution([x_var])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Should have correct structure but no rows
+        assert 'x' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        assert len(result_native) == 0
+    
+    def test_distribution_single_value_column(self):
+        """Test distribution with column that has only one unique value."""
+        # Create dataframe where x has only one value
+        single_val_df = pd.DataFrame({
+            'x': [5, 5, 5, 5],
+            'y': ['a', 'b', 'a', 'b']
+        })
+        nw_single = nw.from_native(single_val_df)
+        calc = ProbabilityCalculator(nw_single)
+        
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(single_val_df)
+        x_var = vb.get_variables('x')
+        
+        # Calculate P(X) - should be P(X=5) = 1.0
+        result = calc.calculate_distribution([x_var])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        assert len(result_native) == 1
+        assert result_native.iloc[0]['x'] == 5
+        assert abs(result_native.iloc[0]['probability'] - 1.0) < 1e-10
+    
+    @pytest.mark.skipif(not HAS_POLARS, reason="Polars not installed")
+    def test_distribution_with_polars(self):
+        """Test that distribution calculation works with Polars dataframes."""
+        # Create Polars dataframe
+        pl_df = pl.DataFrame({
+            'x': [1, 1, 2, 2, 3],
+            'y': ['a', 'b', 'a', 'b', 'a']
+        })
+        nw_df = nw.from_native(pl_df)
+        calc = ProbabilityCalculator(nw_df)
+        
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(pl_df)
+        x_var = vb.get_variables('x')
+        
+        # Calculate P(X)
+        result = calc.calculate_distribution([x_var])
+        
+        # Should work the same as with Pandas
+        # Convert to pandas for easier testing
+        result_pd = result.to_pandas()
+        
+        assert 'x' in result_pd.columns
+        assert 'count' in result_pd.columns
+        assert 'probability' in result_pd.columns
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_pd['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
