@@ -362,3 +362,334 @@ class TestCalculateDistribution:
         # Verify probabilities sum to 1.0
         prob_sum = result_pd['probability'].sum()
         assert abs(prob_sum - 1.0) < 1e-10
+
+
+class TestCalculateScalar:
+    """Test the calculate_scalar method for scalar probability calculations."""
+    
+    def setup_method(self):
+        """Set up test data for scalar probability tests."""
+        # Create test dataframe with known distribution
+        self.df = pd.DataFrame({
+            'x': [1, 1, 2, 2, 2, 3],  # 1: 2/6, 2: 3/6, 3: 1/6
+            'y': ['a', 'b', 'a', 'a', 'b', 'a'],  # a: 4/6, b: 2/6
+            'z': [10, 20, 10, 20, 10, 30]  # 10: 3/6, 20: 2/6, 30: 1/6
+        })
+        self.nw_df = nw.from_native(self.df)
+        self.calc = ProbabilityCalculator(self.nw_df)
+        
+        # Create variables
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(self.df)
+        self.x, self.y, self.z = vb.get_variables('x', 'y', 'z')
+    
+    def test_single_equality_expression(self):
+        """Test P(X=value) for single equality expression."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X=1) = 2/6
+        expr = Expression(self.x, "==", 1)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 2/6) < 1e-10
+        
+        # Test P(X=2) = 3/6
+        expr = Expression(self.x, "==", 2)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 3/6) < 1e-10
+        
+        # Test P(X=3) = 1/6
+        expr = Expression(self.x, "==", 3)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 1/6) < 1e-10
+        
+        # Test P(X=999) = 0 (value not in data)
+        expr = Expression(self.x, "==", 999)
+        prob = self.calc.calculate_scalar([expr])
+        assert prob == 0.0
+    
+    def test_single_inequality_expressions(self):
+        """Test P(X op value) for inequality operators."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X > 1) = 4/6 (values 2,2,2,3)
+        expr = Expression(self.x, ">", 1)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 4/6) < 1e-10
+        
+        # Test P(X >= 2) = 4/6 (values 2,2,2,3)
+        expr = Expression(self.x, ">=", 2)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 4/6) < 1e-10
+        
+        # Test P(X < 3) = 5/6 (values 1,1,2,2,2)
+        expr = Expression(self.x, "<", 3)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 5/6) < 1e-10
+        
+        # Test P(X <= 2) = 5/6 (values 1,1,2,2,2)
+        expr = Expression(self.x, "<=", 2)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 5/6) < 1e-10
+        
+        # Test P(X != 2) = 3/6 (values 1,1,3)
+        expr = Expression(self.x, "!=", 2)
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 3/6) < 1e-10
+    
+    def test_categorical_expressions(self):
+        """Test scalar probabilities with categorical variables."""
+        from poffertjes.expression import Expression
+        
+        # Test P(Y='a') = 4/6
+        expr = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 4/6) < 1e-10
+        
+        # Test P(Y='b') = 2/6
+        expr = Expression(self.y, "==", "b")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 2/6) < 1e-10
+        
+        # Test P(Y != 'a') = 2/6
+        expr = Expression(self.y, "!=", "a")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 2/6) < 1e-10
+    
+    def test_isin_expressions(self):
+        """Test scalar probabilities with isin expressions."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X in [1,3]) = 3/6 (values 1,1,3)
+        expr = Expression(self.x, "in", [1, 3])
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 3/6) < 1e-10
+        
+        # Test P(Y in ['a']) = 4/6
+        expr = Expression(self.y, "in", ["a"])
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 4/6) < 1e-10
+        
+        # Test P(Z in [10, 30]) = 4/6 (values 10,10,10,30)
+        expr = Expression(self.z, "in", [10, 30])
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 4/6) < 1e-10
+    
+    def test_ternary_expressions(self):
+        """Test scalar probabilities with ternary (between) expressions."""
+        from poffertjes.expression import TernaryExpression
+        
+        # Test P(0 < X < 3) = 5/6 (values 1,1,2,2,2) - exclusive bounds
+        expr = TernaryExpression(self.x, 0, 3, closed="none")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 5/6) < 1e-10
+        
+        # Test P(1 <= X <= 2) = 5/6 (values 1,1,2,2,2) - inclusive bounds
+        expr = TernaryExpression(self.x, 1, 2, closed="both")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 5/6) < 1e-10
+        
+        # Test P(1 < X < 3) = 3/6 (values 2,2,2) - exclusive bounds
+        expr = TernaryExpression(self.x, 1, 3, closed="none")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 3/6) < 1e-10
+        
+        # Test P(15 < Z < 25) = 2/6 (values 20, 20) - exclusive bounds
+        expr = TernaryExpression(self.z, 15, 25, closed="none")
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 2/6) < 1e-10
+    
+    def test_multiple_expressions_and_logic(self):
+        """Test scalar probabilities with multiple expressions (AND logic)."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X=2 AND Y='a') = 2/6 (two rows match both conditions)
+        expr1 = Expression(self.x, "==", 2)
+        expr2 = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr1, expr2])
+        assert abs(prob - 2/6) < 1e-10
+        
+        # Test P(X>1 AND Y='b') = 1/6 (one row: x=2, y='b')
+        expr1 = Expression(self.x, ">", 1)
+        expr2 = Expression(self.y, "==", "b")
+        prob = self.calc.calculate_scalar([expr1, expr2])
+        assert abs(prob - 1/6) < 1e-10
+        
+        # Test P(X=1 AND Y='a' AND Z=10) = 1/6 (one row matches all)
+        expr1 = Expression(self.x, "==", 1)
+        expr2 = Expression(self.y, "==", "a")
+        expr3 = Expression(self.z, "==", 10)
+        prob = self.calc.calculate_scalar([expr1, expr2, expr3])
+        assert abs(prob - 1/6) < 1e-10
+        
+        # Test P(X=999 AND Y='a') = 0 (no rows match)
+        expr1 = Expression(self.x, "==", 999)
+        expr2 = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr1, expr2])
+        assert prob == 0.0
+    
+    def test_composite_expressions(self):
+        """Test scalar probabilities with CompositeExpression objects."""
+        from poffertjes.expression import Expression, CompositeExpression
+        
+        # Test P((X=1) OR (X=3)) = 3/6 using CompositeExpression
+        expr1 = Expression(self.x, "==", 1)
+        expr2 = Expression(self.x, "==", 3)
+        composite = CompositeExpression([expr1, expr2], "OR")
+        prob = self.calc.calculate_scalar([composite])
+        assert abs(prob - 3/6) < 1e-10
+        
+        # Test P((X=2) AND (Y='a')) = 2/6 using CompositeExpression
+        expr1 = Expression(self.x, "==", 2)
+        expr2 = Expression(self.y, "==", "a")
+        composite = CompositeExpression([expr1, expr2], "AND")
+        prob = self.calc.calculate_scalar([composite])
+        assert abs(prob - 2/6) < 1e-10
+        
+        # Test complex composite: P((X=1 OR X=2) AND Y='a') = 3/6
+        expr1 = Expression(self.x, "==", 1)
+        expr2 = Expression(self.x, "==", 2)
+        or_composite = CompositeExpression([expr1, expr2], "OR")
+        expr3 = Expression(self.y, "==", "a")
+        and_composite = CompositeExpression([or_composite, expr3], "AND")
+        prob = self.calc.calculate_scalar([and_composite])
+        assert abs(prob - 3/6) < 1e-10
+    
+    def test_conditional_scalar_probabilities(self):
+        """Test conditional scalar probabilities P(expressions|conditions)."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X=2|Y='a') = 2/4 = 0.5
+        # When Y='a', we have 4 rows: X values [1,2,2,3]
+        # Of these, 2 have X=2, so P(X=2|Y='a') = 2/4
+        expr = Expression(self.x, "==", 2)
+        condition = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        assert abs(prob - 2/4) < 1e-10
+        
+        # Test P(Z=10|X=2) = 1/3
+        # When X=2, we have 3 rows: Z values [10,20,10]
+        # Of these, 2 have Z=10, so P(Z=10|X=2) = 2/3
+        expr = Expression(self.z, "==", 10)
+        condition = Expression(self.x, "==", 2)
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        assert abs(prob - 2/3) < 1e-10
+        
+        # Test P(Y='b'|X>1) = 1/4
+        # When X>1, we have 4 rows: Y values ['a','a','b','a']
+        # Of these, 1 has Y='b', so P(Y='b'|X>1) = 1/4
+        expr = Expression(self.y, "==", "b")
+        condition = Expression(self.x, ">", 1)
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        assert abs(prob - 1/4) < 1e-10
+    
+    def test_conditional_with_multiple_conditions(self):
+        """Test conditional probabilities with multiple conditioning expressions."""
+        from poffertjes.expression import Expression
+        
+        # Test P(Z=10|X=2, Y='a') = 1/2
+        # When X=2 AND Y='a', we have 2 rows: Z values [10,20]
+        # Of these, 1 has Z=10, so P(Z=10|X=2,Y='a') = 1/2
+        expr = Expression(self.z, "==", 10)
+        condition1 = Expression(self.x, "==", 2)
+        condition2 = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr], conditions=[condition1, condition2])
+        assert abs(prob - 1/2) < 1e-10
+        
+        # Test P(X=1|Y='a', Z=10) = 1/2
+        # When Y='a' AND Z=10, we have 2 rows: X values [1,2]
+        # Of these, 1 has X=1, so P(X=1|Y='a',Z=10) = 1/2
+        expr = Expression(self.x, "==", 1)
+        condition1 = Expression(self.y, "==", "a")
+        condition2 = Expression(self.z, "==", 10)
+        prob = self.calc.calculate_scalar([expr], conditions=[condition1, condition2])
+        assert abs(prob - 1/2) < 1e-10
+    
+    def test_zero_probability_conditioning(self):
+        """Test that zero probability conditioning raises appropriate error."""
+        from poffertjes.expression import Expression
+        
+        # Create condition that matches no rows
+        expr = Expression(self.x, "==", 1)
+        condition = Expression(self.x, "==", 999)  # No x values are 999
+        
+        # Should raise ValueError for zero probability conditioning
+        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+            self.calc.calculate_scalar([expr], conditions=[condition])
+    
+    def test_scalar_with_empty_dataframe(self):
+        """Test scalar calculation with empty dataframe."""
+        # Create empty dataframe
+        empty_df = pd.DataFrame({'x': [], 'y': []})
+        nw_empty = nw.from_native(empty_df)
+        calc = ProbabilityCalculator(nw_empty)
+        
+        # Create expression directly (VariableBuilder raises error for empty dataframes)
+        from poffertjes.variable import Variable
+        from poffertjes.expression import Expression
+        x_var = Variable('x', nw_empty)
+        expr = Expression(x_var, "==", 1)
+        
+        # Should return 0.0 for empty dataframe
+        prob = calc.calculate_scalar([expr])
+        assert prob == 0.0
+    
+    def test_scalar_edge_cases(self):
+        """Test scalar calculation edge cases."""
+        from poffertjes.expression import Expression
+        
+        # Test when all rows match the condition
+        expr = Expression(self.x, ">=", 1)  # All x values are >= 1
+        prob = self.calc.calculate_scalar([expr])
+        assert abs(prob - 1.0) < 1e-10
+        
+        # Test when no rows match the condition
+        expr = Expression(self.x, ">", 100)  # No x values are > 100
+        prob = self.calc.calculate_scalar([expr])
+        assert prob == 0.0
+        
+        # Test with single-value column
+        single_val_df = pd.DataFrame({'x': [5, 5, 5, 5]})
+        nw_single = nw.from_native(single_val_df)
+        calc = ProbabilityCalculator(nw_single)
+        
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(single_val_df)
+        x_var = vb.get_variables('x')
+        
+        # P(X=5) should be 1.0
+        expr = Expression(x_var, "==", 5)
+        prob = calc.calculate_scalar([expr])
+        assert abs(prob - 1.0) < 1e-10
+        
+        # P(X=999) should be 0.0
+        expr = Expression(x_var, "==", 999)
+        prob = calc.calculate_scalar([expr])
+        assert prob == 0.0
+    
+    @pytest.mark.skipif(not HAS_POLARS, reason="Polars not installed")
+    def test_scalar_with_polars(self):
+        """Test that scalar calculation works with Polars dataframes."""
+        # Create Polars dataframe
+        pl_df = pl.DataFrame({
+            'x': [1, 1, 2, 2, 3],
+            'y': ['a', 'b', 'a', 'b', 'a']
+        })
+        nw_df = nw.from_native(pl_df)
+        calc = ProbabilityCalculator(nw_df)
+        
+        from poffertjes.variable import VariableBuilder
+        from poffertjes.expression import Expression
+        vb = VariableBuilder.from_data(pl_df)
+        x_var = vb.get_variables('x')
+        
+        # Test P(X=2) = 2/5
+        expr = Expression(x_var, "==", 2)
+        prob = calc.calculate_scalar([expr])
+        assert abs(prob - 2/5) < 1e-10
+        
+        # Should work the same as with Pandas
+        y_var = vb.get_variables('y')
+        expr1 = Expression(x_var, "==", 2)
+        expr2 = Expression(y_var, "==", "a")
+        prob = calc.calculate_scalar([expr1, expr2])
+        assert abs(prob - 1/5) < 1e-10  # One row matches both conditions

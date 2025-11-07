@@ -112,15 +112,13 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 6.2 Implement marginal probability distribution calculation
 
-
     - Implement `calculate_distribution(variables, conditions=None)`
     - Use `group_by().agg(nw.len())` pattern
     - Calculate probabilities by dividing by total
     - Write unit tests for marginal distributions
     - _Requirements: 4.1, 4.3, 4.4, 6.3, 6.4, 7.2, 7.3_
   
-  - [-] 6.3 Implement scalar probability calculation
-
+  - [x] 6.3 Implement scalar probability calculation
 
 
     - Implement `calculate_scalar(expressions, conditions=None)`

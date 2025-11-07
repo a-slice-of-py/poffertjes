@@ -1,11 +1,11 @@
 """ProbabilityCalculator for computing probabilities using Narwhals operations."""
 
-from typing import Any, List, Optional, TYPE_CHECKING
+from typing import Any, List, Optional, Union, TYPE_CHECKING
 import narwhals as nw
 
 if TYPE_CHECKING:
     from poffertjes.variable import Variable
-    from poffertjes.expression import Expression
+    from poffertjes.expression import Expression, CompositeExpression
 
 
 class ProbabilityCalculator:
@@ -103,3 +103,70 @@ class ProbabilityCalculator:
         )
         
         return result
+
+    def calculate_scalar(
+        self,
+        expressions: List[Union["Expression", "CompositeExpression"]],
+        conditions: Optional[List["Expression"]] = None
+    ) -> float:
+        """Calculate scalar probability using filter operations.
+        
+        This method calculates scalar probabilities P(expressions) or conditional
+        probabilities P(expressions|conditions) using efficient Narwhals filter
+        operations. It counts rows that satisfy the expressions and divides by
+        the appropriate denominator.
+        
+        Args:
+            expressions: List of Expression or CompositeExpression objects to evaluate
+            conditions: Optional list of Expression objects for conditioning
+            
+        Returns:
+            Scalar probability as a float between 0.0 and 1.0
+            
+        Raises:
+            ValueError: If conditioning event has zero probability (no matching rows)
+            
+        Examples:
+            For P(X=x): count(X=x) / total
+            For P(X=x|Y=y): count(X=x AND Y=y) / count(Y=y)
+            For P(X=x AND Y=y): count(X=x AND Y=y) / total
+            
+        Requirements addressed:
+        - 4.2: Return scalar probability for conditions
+        - 4.4: Handle zero probability conditions appropriately
+        - 6.3: Count rows where conditions hold and divide by total
+        - 6.5: Handle conditional probabilities P(X|Y)
+        - 7.9: Use Narwhals column expression methods
+        - 7.10: Use Narwhals filter expressions rather than manual row selection
+        - 9.1: Support comparison operators (==, !=, <, >, <=, >=)
+        - 9.2: Support multiple conditions combined with AND
+        - 9.3: Support ternary conditions like a < x < b
+        """
+        df = self.df
+        
+        # Apply conditions first (for conditional probabilities)
+        if conditions:
+            for condition in conditions:
+                df = df.filter(condition.to_narwhals_expr())
+            
+            # Check if conditioning event has any occurrences
+            denominator = len(df)
+            if denominator == 0:
+                raise ValueError("Conditioning event has zero probability")
+        else:
+            # For marginal probabilities, use total count as denominator
+            denominator = self.total_count
+        
+        # Apply expressions (the events we want to calculate probability for)
+        for expression in expressions:
+            df = df.filter(expression.to_narwhals_expr())
+        
+        # Count rows that satisfy all expressions
+        numerator = len(df)
+        
+        # Calculate probability
+        # Handle edge case where denominator is 0 (empty dataframe)
+        if denominator == 0:
+            return 0.0
+        
+        return numerator / denominator
