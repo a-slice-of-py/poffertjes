@@ -188,34 +188,51 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Write unit tests for error cases
     - _Requirements: 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7_
 
-- [ ] 9. Add multi-dtype support
-  - [ ] 9.1 Test with integer columns
+- [x] 9. Add multi-dtype support
+
+
+
+
+  - [x] 9.1 Test with integer columns
+
+
     - Write integration tests with int dtype
     - _Requirements: 8.1_
   
-  - [ ] 9.2 Test with float columns
+  - [x] 9.2 Test with float columns
+
+
     - Write integration tests with float dtype
     - Handle floating point precision
     - _Requirements: 8.2, 8.7, 16.3_
   
-  - [ ] 9.3 Test with categorical/string columns
+  - [x] 9.3 Test with categorical/string columns
+
+
     - Write integration tests with string dtype
     - Test `isin()` method
     - _Requirements: 8.3_
   
-  - [ ] 9.4 Test with boolean columns
+  - [x] 9.4 Test with boolean columns
+
+
     - Write integration tests with bool dtype
     - _Requirements: 8.4_
   
-  - [ ] 9.5 Test with datetime columns
+  - [x] 9.5 Test with datetime columns
+
+
     - Write integration tests with datetime dtype
     - _Requirements: 8.5_
   
-  - [ ] 9.6 Test dtype-appropriate comparisons
+  - [x] 9.6 Test dtype-appropriate comparisons
+
+
     - Write tests for all comparison operators across dtypes
     - _Requirements: 8.6_
 
 - [ ] 10. Add comprehensive integration tests
+
   - [ ] 10.1 Test end-to-end marginal probability workflows
     - Test `p(x)` returning distributions
     - Test `p(x == value)` returning scalars
