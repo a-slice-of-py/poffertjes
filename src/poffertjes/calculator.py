@@ -65,34 +65,59 @@ class ProbabilityCalculator:
         - 4.1: Return probability distribution of variables
         - 4.3: Include all observed values and their probabilities
         - 4.4: Probabilities sum to 1.0 (within floating point precision)
+        - 5.1: Return conditional probability distribution of x given y
+        - 5.3: Return distribution of x conditioned on y equals value
+        - 5.4: Return P(X|Y,Z) for multiple conditioning variables
+        - 5.6: Return P(X=x_i|Y=y_j) for all combinations
+        - 5.7: Raise clear error when conditioning event has zero occurrences
+        - 5.8: Conditional probabilities sum to 1.0
         - 6.3: Count rows where conditions hold and divide by total
         - 6.4: Handle joint probabilities P(X,Y)
+        - 6.5: Count rows where both hold, divided by rows where Y=y holds
         - 7.2: Use group_by operations followed by aggregations
         - 7.3: Use df.group_by(['X', 'Y']).agg(nw.len()) pattern
+        - 7.5: Use efficient filter + group_by operations
         """
         df = self.df
         
         # Apply conditions if present (for conditional probabilities)
         if conditions:
+            # Apply all conditioning expressions using efficient filter operations
+            # This satisfies requirement 7.5: use efficient filter + group_by operations
             for condition in conditions:
                 df = df.filter(condition.to_narwhals_expr())
             
             # Check if conditioning event has any occurrences
+            # This satisfies requirement 5.7: raise clear error when conditioning event has zero occurrences
             conditional_count = len(df)
             if conditional_count == 0:
-                raise ValueError("Conditioning event has zero probability")
+                raise ValueError(
+                    "Conditioning event has zero probability - no rows match the given conditions"
+                )
             
             # For conditional probabilities, normalize by the conditional count
+            # This satisfies requirement 6.5: count rows where both hold, divided by rows where Y=y holds
             total = conditional_count
         else:
             # For marginal probabilities, normalize by the total count
             total = self.total_count
+        
+        # Handle empty dataframe case
+        if total == 0:
+            # Return empty result with correct structure using pandas
+            import pandas as pd
+            var_names = [var.name for var in variables]
+            empty_dict = {name: [] for name in var_names}
+            empty_dict.update({"count": [], "probability": []})
+            empty_result = nw.from_native(pd.DataFrame(empty_dict))
+            return empty_result
         
         # Extract variable names for group_by operation
         var_names = [var.name for var in variables]
         
         # Use efficient group_by + agg pattern as specified in requirements
         # This satisfies requirement 7.2: use group_by operations followed by aggregations
+        # This satisfies requirement 7.3: use df.group_by(['X', 'Y']).agg(nw.len()) pattern
         result = (
             df.group_by(var_names)
             .agg(count=nw.len())  # Count occurrences of each combination
@@ -134,8 +159,12 @@ class ProbabilityCalculator:
         Requirements addressed:
         - 4.2: Return scalar probability for conditions
         - 4.4: Handle zero probability conditions appropriately
+        - 5.2: Return scalar conditional probability P(X=value1|Y=value2)
+        - 5.5: Return P(X|Y=value1 AND Z=value2) for multiple conditions
+        - 5.7: Raise clear error when conditioning event has zero occurrences
         - 6.3: Count rows where conditions hold and divide by total
-        - 6.5: Handle conditional probabilities P(X|Y)
+        - 6.5: Count rows where both hold, divided by rows where Y=y holds
+        - 7.5: Use efficient filter + group_by operations
         - 7.9: Use Narwhals column expression methods
         - 7.10: Use Narwhals filter expressions rather than manual row selection
         - 9.1: Support comparison operators (==, !=, <, >, <=, >=)
@@ -146,18 +175,24 @@ class ProbabilityCalculator:
         
         # Apply conditions first (for conditional probabilities)
         if conditions:
+            # Apply all conditioning expressions using efficient filter operations
+            # This satisfies requirement 7.5: use efficient filter + group_by operations
             for condition in conditions:
                 df = df.filter(condition.to_narwhals_expr())
             
             # Check if conditioning event has any occurrences
+            # This satisfies requirement 5.7: raise clear error when conditioning event has zero occurrences
             denominator = len(df)
             if denominator == 0:
-                raise ValueError("Conditioning event has zero probability")
+                raise ValueError(
+                    "Conditioning event has zero probability - no rows match the given conditions"
+                )
         else:
             # For marginal probabilities, use total count as denominator
             denominator = self.total_count
         
         # Apply expressions (the events we want to calculate probability for)
+        # This satisfies requirement 7.10: use Narwhals filter expressions rather than manual row selection
         for expression in expressions:
             df = df.filter(expression.to_narwhals_expr())
         
@@ -169,4 +204,5 @@ class ProbabilityCalculator:
         if denominator == 0:
             return 0.0
         
+        # This satisfies requirement 6.5: count rows where both hold, divided by rows where Y=y holds
         return numerator / denominator

@@ -126,7 +126,11 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Write unit tests for scalar probabilities
     - _Requirements: 4.2, 4.4, 6.3, 6.5, 7.9, 7.10, 9.1, 9.2, 9.3_
   
-  - [ ] 6.4 Implement conditional probability support
+  - [x] 6.4 Implement conditional probability support
+
+
+
+
     - Add conditioning logic to both methods
     - Handle zero probability conditioning events
     - Write unit tests for conditional probabilities

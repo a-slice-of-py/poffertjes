@@ -693,3 +693,344 @@ class TestCalculateScalar:
         expr2 = Expression(y_var, "==", "a")
         prob = calc.calculate_scalar([expr1, expr2])
         assert abs(prob - 1/5) < 1e-10  # One row matches both conditions
+
+
+class TestConditionalProbabilities:
+    """Comprehensive tests for conditional probability support (Task 6.4)."""
+    
+    def setup_method(self):
+        """Set up test data for conditional probability tests."""
+        # Create test dataframe with known conditional relationships
+        self.df = pd.DataFrame({
+            'x': [1, 1, 2, 2, 2, 3, 3, 4],  # 1: 2/8, 2: 3/8, 3: 2/8, 4: 1/8
+            'y': ['a', 'b', 'a', 'a', 'b', 'a', 'b', 'a'],  # a: 5/8, b: 3/8
+            'z': [10, 20, 10, 20, 10, 30, 30, 40]  # Various values
+        })
+        self.nw_df = nw.from_native(self.df)
+        self.calc = ProbabilityCalculator(self.nw_df)
+        
+        # Create variables
+        from poffertjes.variable import VariableBuilder
+        vb = VariableBuilder.from_data(self.df)
+        self.x, self.y, self.z = vb.get_variables('x', 'y', 'z')
+    
+    def test_conditional_distribution_single_condition(self):
+        """Test P(X|Y='a') - Requirement 5.1, 5.3."""
+        from poffertjes.expression import Expression
+        
+        # Create condition Y = 'a'
+        condition = Expression(self.y, "==", "a")
+        
+        # Calculate P(X|Y='a')
+        result = self.calc.calculate_distribution([self.x], conditions=[condition])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # Verify structure
+        assert 'x' in result_native.columns
+        assert 'count' in result_native.columns
+        assert 'probability' in result_native.columns
+        
+        # When Y='a', we have rows: x=[1,2,2,3,4] (5 total)
+        # P(X=1|Y='a') = 1/5, P(X=2|Y='a') = 2/5, P(X=3|Y='a') = 1/5, P(X=4|Y='a') = 1/5
+        
+        # Verify probabilities sum to 1.0 (Requirement 5.8)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify specific conditional probabilities
+        result_dict = dict(zip(result_native['x'], result_native['probability']))
+        assert abs(result_dict[1] - 1/5) < 1e-10
+        assert abs(result_dict[2] - 2/5) < 1e-10
+        assert abs(result_dict[3] - 1/5) < 1e-10
+        assert abs(result_dict[4] - 1/5) < 1e-10
+    
+    def test_conditional_distribution_multiple_conditions(self):
+        """Test P(Z|X=2, Y='a') - Requirement 5.4, 5.5."""
+        from poffertjes.expression import Expression
+        
+        # Create conditions X = 2 AND Y = 'a'
+        condition1 = Expression(self.x, "==", 2)
+        condition2 = Expression(self.y, "==", "a")
+        
+        # Calculate P(Z|X=2, Y='a')
+        result = self.calc.calculate_distribution([self.z], conditions=[condition1, condition2])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # When X=2 AND Y='a', we have rows: z=[10,20] (2 total)
+        # P(Z=10|X=2,Y='a') = 1/2, P(Z=20|X=2,Y='a') = 1/2
+        
+        assert len(result_native) == 2
+        
+        # Verify probabilities sum to 1.0 (Requirement 5.8)
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify specific probabilities
+        result_dict = dict(zip(result_native['z'], result_native['probability']))
+        assert abs(result_dict[10] - 1/2) < 1e-10
+        assert abs(result_dict[20] - 1/2) < 1e-10
+    
+    def test_conditional_joint_distribution(self):
+        """Test P(X,Z|Y='b') - joint conditional distribution."""
+        from poffertjes.expression import Expression
+        
+        # Create condition Y = 'b'
+        condition = Expression(self.y, "==", "b")
+        
+        # Calculate P(X,Z|Y='b')
+        result = self.calc.calculate_distribution([self.x, self.z], conditions=[condition])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        # When Y='b', we have rows: (x,z)=[(1,20), (2,10), (3,30)] (3 total)
+        # Each combination should have probability 1/3
+        
+        assert len(result_native) == 3
+        
+        # Verify probabilities sum to 1.0
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Verify each combination has probability 1/3
+        for _, row in result_native.iterrows():
+            assert abs(row['probability'] - 1/3) < 1e-10
+    
+    def test_conditional_scalar_probability(self):
+        """Test P(X=2|Y='a') - Requirement 5.2."""
+        from poffertjes.expression import Expression
+        
+        # Create expression and condition
+        expr = Expression(self.x, "==", 2)
+        condition = Expression(self.y, "==", "a")
+        
+        # Calculate P(X=2|Y='a')
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        
+        # When Y='a', we have 5 rows with x=[1,2,2,3,4]
+        # Of these, 2 have X=2, so P(X=2|Y='a') = 2/5
+        assert abs(prob - 2/5) < 1e-10
+    
+    def test_conditional_scalar_multiple_conditions(self):
+        """Test P(Z=10|X=2, Y='a') - Requirement 5.5."""
+        from poffertjes.expression import Expression
+        
+        # Create expression and conditions
+        expr = Expression(self.z, "==", 10)
+        condition1 = Expression(self.x, "==", 2)
+        condition2 = Expression(self.y, "==", "a")
+        
+        # Calculate P(Z=10|X=2, Y='a')
+        prob = self.calc.calculate_scalar([expr], conditions=[condition1, condition2])
+        
+        # When X=2 AND Y='a', we have 2 rows with z=[10,20]
+        # Of these, 1 has Z=10, so P(Z=10|X=2,Y='a') = 1/2
+        assert abs(prob - 1/2) < 1e-10
+    
+    def test_conditional_with_comparison_operators(self):
+        """Test conditional probabilities with comparison operators."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X>2|Y='a')
+        expr = Expression(self.x, ">", 2)
+        condition = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        
+        # When Y='a', we have x=[1,2,2,3,4] (5 total)
+        # Of these, 2 have X>2 (values 3,4), so P(X>2|Y='a') = 2/5
+        assert abs(prob - 2/5) < 1e-10
+        
+        # Test P(Z<=20|X>=2)
+        expr = Expression(self.z, "<=", 20)
+        condition = Expression(self.x, ">=", 2)
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        
+        # When X>=2, we have 6 rows with z=[10,20,10,30,30,40]
+        # Of these, 3 have Z<=20 (values 10,20,10), so P(Z<=20|X>=2) = 3/6 = 1/2
+        assert abs(prob - 1/2) < 1e-10
+    
+    def test_conditional_with_isin_expressions(self):
+        """Test conditional probabilities with isin expressions."""
+        from poffertjes.expression import Expression
+        
+        # Test P(X in [1,3]|Y='a')
+        expr = Expression(self.x, "in", [1, 3])
+        condition = Expression(self.y, "==", "a")
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        
+        # When Y='a', we have x=[1,2,2,3,4] (5 total)
+        # Of these, 2 have X in [1,3] (values 1,3), so P(X in [1,3]|Y='a') = 2/5
+        assert abs(prob - 2/5) < 1e-10
+    
+    def test_zero_probability_conditioning_distribution(self):
+        """Test zero probability conditioning for distributions - Requirement 5.7."""
+        from poffertjes.expression import Expression
+        
+        # Create condition that matches no rows
+        condition = Expression(self.x, "==", 999)  # No x values are 999
+        
+        # Should raise ValueError with clear message
+        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+            self.calc.calculate_distribution([self.y], conditions=[condition])
+    
+    def test_zero_probability_conditioning_scalar(self):
+        """Test zero probability conditioning for scalar probabilities - Requirement 5.7."""
+        from poffertjes.expression import Expression
+        
+        # Create expression and impossible condition
+        expr = Expression(self.x, "==", 1)
+        condition = Expression(self.x, "==", 999)  # No x values are 999
+        
+        # Should raise ValueError with clear message
+        with pytest.raises(ValueError, match="Conditioning event has zero probability"):
+            self.calc.calculate_scalar([expr], conditions=[condition])
+    
+    def test_conditional_probability_axioms(self):
+        """Test that conditional probabilities satisfy basic axioms."""
+        from poffertjes.expression import Expression
+        
+        # Test that P(X=x_i|Y=y) sums to 1 for all x_i (Requirement 5.8)
+        condition = Expression(self.y, "==", "a")
+        result = self.calc.calculate_distribution([self.x], conditions=[condition])
+        result_native = result.to_pandas() if hasattr(result, 'to_pandas') else result.to_native()
+        
+        prob_sum = result_native['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
+        
+        # Test that P(X=x, Y=y) = P(X=x|Y=y) * P(Y=y)
+        # Choose specific values
+        x_val, y_val = 2, 'a'
+        
+        # Calculate P(X=2, Y='a')
+        expr1 = Expression(self.x, "==", x_val)
+        expr2 = Expression(self.y, "==", y_val)
+        joint_prob = self.calc.calculate_scalar([expr1, expr2])
+        
+        # Calculate P(X=2|Y='a')
+        conditional_prob = self.calc.calculate_scalar([expr1], conditions=[expr2])
+        
+        # Calculate P(Y='a')
+        marginal_prob = self.calc.calculate_scalar([expr2])
+        
+        # Verify P(X=2, Y='a') = P(X=2|Y='a') * P(Y='a')
+        expected_joint = conditional_prob * marginal_prob
+        assert abs(joint_prob - expected_joint) < 1e-10
+    
+    def test_conditional_with_complex_expressions(self):
+        """Test conditional probabilities with complex composite expressions."""
+        from poffertjes.expression import Expression, CompositeExpression
+        
+        # Test P((X=1 OR X=3)|Y='a')
+        expr1 = Expression(self.x, "==", 1)
+        expr2 = Expression(self.x, "==", 3)
+        composite = CompositeExpression([expr1, expr2], "OR")
+        condition = Expression(self.y, "==", "a")
+        
+        prob = self.calc.calculate_scalar([composite], conditions=[condition])
+        
+        # When Y='a', we have x=[1,2,2,3,4] (5 total)
+        # Of these, 2 have X=1 OR X=3 (values 1,3), so probability = 2/5
+        assert abs(prob - 2/5) < 1e-10
+    
+    def test_nested_conditional_probabilities(self):
+        """Test multiple levels of conditioning."""
+        from poffertjes.expression import Expression
+        
+        # Test P(Z=10|X=2, Y='a', Z<=20)
+        expr = Expression(self.z, "==", 10)
+        condition1 = Expression(self.x, "==", 2)
+        condition2 = Expression(self.y, "==", "a")
+        condition3 = Expression(self.z, "<=", 20)
+        
+        prob = self.calc.calculate_scalar([expr], conditions=[condition1, condition2, condition3])
+        
+        # When X=2 AND Y='a' AND Z<=20, we have z=[10,20] (2 total)
+        # Of these, 1 has Z=10, so probability = 1/2
+        assert abs(prob - 1/2) < 1e-10
+    
+    def test_conditional_edge_cases(self):
+        """Test edge cases for conditional probabilities."""
+        from poffertjes.expression import Expression
+        
+        # Test conditioning on always-true condition
+        condition = Expression(self.x, ">=", 0)  # All x values are >= 0
+        expr = Expression(self.y, "==", "a")
+        
+        # P(Y='a'|X>=0) should equal P(Y='a') since condition is always true
+        conditional_prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        marginal_prob = self.calc.calculate_scalar([expr])
+        
+        assert abs(conditional_prob - marginal_prob) < 1e-10
+        
+        # Test conditioning on the same variable
+        condition = Expression(self.x, "==", 2)
+        expr = Expression(self.x, "==", 2)
+        
+        # P(X=2|X=2) should be 1.0
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        assert abs(prob - 1.0) < 1e-10
+        
+        # Test conditioning on different value of same variable
+        condition = Expression(self.x, "==", 2)
+        expr = Expression(self.x, "==", 1)
+        
+        # P(X=1|X=2) should be 0.0
+        prob = self.calc.calculate_scalar([expr], conditions=[condition])
+        assert prob == 0.0
+    
+    def test_conditional_with_missing_values(self):
+        """Test conditional probabilities with missing values."""
+        # Create dataframe with NaN values
+        df_with_nan = pd.DataFrame({
+            'x': [1, 1, 2, None, 2, 3],
+            'y': ['a', 'b', 'a', 'a', None, 'a']
+        })
+        nw_df_nan = nw.from_native(df_with_nan)
+        calc_nan = ProbabilityCalculator(nw_df_nan)
+        
+        from poffertjes.variable import VariableBuilder
+        from poffertjes.expression import Expression
+        
+        vb = VariableBuilder.from_data(df_with_nan)
+        x_var, y_var = vb.get_variables('x', 'y')
+        
+        # Test P(X=2|Y='a') - should exclude rows with NaN
+        expr = Expression(x_var, "==", 2)
+        condition = Expression(y_var, "==", "a")
+        
+        # When Y='a', we have x=[1,2,NaN,3] (4 total)
+        # Of these, 1 has X=2, so P(X=2|Y='a') = 1/4
+        prob = calc_nan.calculate_scalar([expr], conditions=[condition])
+        assert abs(prob - 1/4) < 1e-10
+    
+    @pytest.mark.skipif(not HAS_POLARS, reason="Polars not installed")
+    def test_conditional_probabilities_with_polars(self):
+        """Test that conditional probabilities work with Polars dataframes."""
+        # Create Polars dataframe
+        pl_df = pl.DataFrame({
+            'x': [1, 1, 2, 2, 3],
+            'y': ['a', 'b', 'a', 'b', 'a']
+        })
+        nw_df = nw.from_native(pl_df)
+        calc = ProbabilityCalculator(nw_df)
+        
+        from poffertjes.variable import VariableBuilder
+        from poffertjes.expression import Expression
+        
+        vb = VariableBuilder.from_data(pl_df)
+        x_var, y_var = vb.get_variables('x', 'y')
+        
+        # Test P(X=2|Y='a')
+        expr = Expression(x_var, "==", 2)
+        condition = Expression(y_var, "==", "a")
+        prob = calc.calculate_scalar([expr], conditions=[condition])
+        
+        # When Y='a', we have x=[1,2,3] (3 total)
+        # Of these, 1 has X=2, so P(X=2|Y='a') = 1/3
+        assert abs(prob - 1/3) < 1e-10
+        
+        # Test conditional distribution
+        result = calc.calculate_distribution([x_var], conditions=[condition])
+        result_pd = result.to_pandas()
+        
+        # Should work the same as with Pandas
+        prob_sum = result_pd['probability'].sum()
+        assert abs(prob_sum - 1.0) < 1e-10
