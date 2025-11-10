@@ -176,7 +176,7 @@ class TernaryExpression(Expression):
             raise ExpressionError(
                 f"closed must be one of 'none', 'left', 'right', 'both', got: {closed}"
             )
-        
+
         # Validate bounds make sense
         try:
             if lower >= upper:
@@ -248,9 +248,11 @@ class CompositeExpression:
         """
         if logic not in ("AND", "OR"):
             raise ExpressionError(f"Logic must be 'AND' or 'OR', got: {logic}")
-        
+
         if not expressions:
-            raise ExpressionError("CompositeExpression requires at least one expression")
+            raise ExpressionError(
+                "CompositeExpression requires at least one expression"
+            )
 
         self.expressions = expressions
         self.logic = logic

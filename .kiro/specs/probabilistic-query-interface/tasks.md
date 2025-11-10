@@ -320,8 +320,7 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Include examples for all features
     - _Requirements: 14.7_
 
-- [ ] 13. Performance optimization
-
+- [x] 13. Performance optimization
 
   - [x] 13.1 Ensure lazy evaluation is used
 
@@ -341,24 +340,30 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Verify memory efficiency
     - _Requirements: 7.14, 16.2, 16.4_
 
-- [ ] 14. Final integration and polish
-  - [ ] 14.1 Verify PEP 8 compliance
+- [x] 14. Final integration and polish
+
+
+  - [x] 14.1 Verify PEP 8 compliance
+
     - Run linter (ruff)
     - Fix any style issues
     - _Requirements: 14.1_
   
-  - [ ] 14.2 Run full test suite
+  - [x] 14.2 Run full test suite
+
     - Ensure all tests pass
     - Check test coverage
     - _Requirements: 12.15_
   
-  - [ ] 14.3 Update README with examples
+  - [x] 14.3 Update README with examples
+
     - Add installation instructions
     - Add usage examples
     - Add API reference
     - _Requirements: 14.7_
   
-  - [ ] 14.4 Verify both Pandas and Polars support
+  - [x] 14.4 Verify both Pandas and Polars support
+
     - Test with both backends
     - Ensure feature parity
     - _Requirements: 1.1, 1.2, 1.3_

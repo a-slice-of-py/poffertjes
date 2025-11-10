@@ -34,4 +34,5 @@ source = "vcs"
 [dependency-groups]
 dev = [
     "polars>=1.35.1",
+    "pytest-cov>=7.0.0",
 ]

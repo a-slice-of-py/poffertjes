@@ -1,10 +1,10 @@
 """ProbabilityCalculator for computing probabilities using Narwhals operations."""
 
-from typing import Any, List, Optional, Union, TYPE_CHECKING, Dict, Tuple
+from typing import List, Optional, Union, TYPE_CHECKING, Dict, Tuple
 import narwhals as nw
 from narwhals.typing import FrameT
 
-from poffertjes.exceptions import ProbabilityError, DataframeError
+from poffertjes.exceptions import ProbabilityError
 
 if TYPE_CHECKING:
     from poffertjes.variable import Variable
@@ -37,12 +37,12 @@ class ProbabilityCalculator:
         # Store dataframe for lazy evaluation - don't calculate total count yet
         # Total count will be calculated lazily when needed
         self._total_count = None
-        
+
         # Cache for group_by operations to enable reuse
         # Key: (tuple of variable names, conditions hash)
         # Value: computed aggregation result
         self._groupby_cache: Dict[Tuple[Tuple[str, ...], int], FrameT] = {}
-        
+
         # Cache for filtered dataframes to reuse expensive filter operations
         # Key: hash of conditions
         # Value: filtered dataframe
@@ -51,10 +51,10 @@ class ProbabilityCalculator:
     @property
     def total_count(self) -> int:
         """Get total count of rows, calculated lazily.
-        
+
         This property ensures we only calculate the total count when actually needed,
         supporting lazy evaluation patterns. The count is cached after first calculation.
-        
+
         Returns:
             Total number of rows in the dataframe
         """
@@ -63,7 +63,7 @@ class ProbabilityCalculator:
                 self._total_count = len(self.df)
             except TypeError:
                 # Handle lazy frames that don't support len()
-                if hasattr(self.df, 'collect'):
+                if hasattr(self.df, "collect"):
                     # It's a lazy frame, collect it to get the count
                     collected_df = self.df.collect()
                     self._total_count = len(collected_df)
@@ -71,85 +71,91 @@ class ProbabilityCalculator:
                     raise
         return self._total_count
 
-    def _hash_conditions(self, conditions: Optional[List[Union["Expression", "Variable"]]]) -> int:
+    def _hash_conditions(
+        self, conditions: Optional[List[Union["Expression", "Variable"]]]
+    ) -> int:
         """Create a hash for a list of conditions to use as cache key.
-        
+
         Args:
             conditions: List of Expression or Variable objects or None
-            
+
         Returns:
             Hash value for the conditions
         """
         if not conditions:
             return 0
-        
+
         # Create a simple hash based on condition characteristics
         condition_tuples = []
         for cond in conditions:
-            if hasattr(cond, 'variable'):  # Expression object
-                condition_tuples.append((cond.variable.name, str(cond.operator), str(cond.value)))
+            if hasattr(cond, "variable"):  # Expression object
+                condition_tuples.append(
+                    (cond.variable.name, str(cond.operator), str(cond.value))
+                )
             else:  # Variable object
-                condition_tuples.append(('variable', cond.name, 'all_values'))
-        
+                condition_tuples.append(("variable", cond.name, "all_values"))
+
         return hash(tuple(condition_tuples))
 
-    def _get_filtered_dataframe(self, conditions: Optional[List[Union["Expression", "Variable"]]]) -> FrameT:
+    def _get_filtered_dataframe(
+        self, conditions: Optional[List[Union["Expression", "Variable"]]]
+    ) -> FrameT:
         """Get filtered dataframe, using cache when possible.
-        
+
         Args:
             conditions: List of Expression or Variable objects to filter by
-            
+
         Returns:
             Filtered dataframe (cached if possible)
         """
         if not conditions:
             return self.df
-        
+
         conditions_hash = self._hash_conditions(conditions)
-        
+
         # Check cache first
         if conditions_hash in self._filter_cache:
             return self._filter_cache[conditions_hash]
-        
+
         # Apply filters
         df = self.df
         for condition in conditions:
-            if hasattr(condition, 'to_narwhals_expr'):  # Expression object
+            if hasattr(condition, "to_narwhals_expr"):  # Expression object
                 df = df.filter(condition.to_narwhals_expr())
             # Variable objects don't filter - they're used for grouping in conditional distributions
-        
+
         # Cache the result
         self._filter_cache[conditions_hash] = df
         return df
 
     def _get_cached_groupby(
-        self, 
-        variables: List["Variable"], 
-        conditions: Optional[List[Union["Expression", "Variable"]]] = None
+        self,
+        variables: List["Variable"],
+        conditions: Optional[List[Union["Expression", "Variable"]]] = None,
     ) -> Optional[FrameT]:
         """Try to get cached group_by result.
-        
+
         Args:
             variables: List of variables to group by
             conditions: Optional conditions for filtering
-            
+
         Returns:
             Cached result if available, None otherwise
         """
         var_names = tuple(var.name for var in variables)
         conditions_hash = self._hash_conditions(conditions)
         cache_key = (var_names, conditions_hash)
-        
+
         return self._groupby_cache.get(cache_key)
 
     def _cache_groupby_result(
-        self, 
-        variables: List["Variable"], 
-        conditions: Optional[List[Union["Expression", "Variable"]]], 
-        result: FrameT
+        self,
+        variables: List["Variable"],
+        conditions: Optional[List[Union["Expression", "Variable"]]],
+        result: FrameT,
     ) -> None:
         """Cache a group_by result for future reuse.
-        
+
         Args:
             variables: List of variables that were grouped by
             conditions: Conditions that were applied
@@ -158,20 +164,20 @@ class ProbabilityCalculator:
         var_names = tuple(var.name for var in variables)
         conditions_hash = self._hash_conditions(conditions)
         cache_key = (var_names, conditions_hash)
-        
+
         self._groupby_cache[cache_key] = result
 
     def precompute_marginals(self, variables: List["Variable"]) -> None:
         """Precompute marginal distributions for given variables.
-        
+
         This method can be called to precompute and cache marginal distributions
         for variables that are likely to be queried multiple times. This is
         particularly useful when you know you'll be doing many conditional
         probability calculations.
-        
+
         Args:
             variables: List of variables to precompute marginals for
-            
+
         Examples:
             >>> calc = ProbabilityCalculator(df)
             >>> calc.precompute_marginals([x, y, z])  # Cache P(X), P(Y), P(Z)
@@ -180,7 +186,7 @@ class ProbabilityCalculator:
         for var in variables:
             # Compute and cache marginal distribution
             self.calculate_distribution([var])
-            
+
         # Also compute pairwise joint distributions if we have multiple variables
         if len(variables) > 1:
             for i in range(len(variables)):
@@ -190,7 +196,7 @@ class ProbabilityCalculator:
 
     def clear_cache(self) -> None:
         """Clear all cached computations.
-        
+
         This method clears the internal caches to free memory. Call this if
         you're done with a calculator and want to reclaim memory, or if the
         underlying dataframe has changed.
@@ -251,9 +257,10 @@ class ProbabilityCalculator:
 
         # Handle Variable conditioning (P(X|Y) where Y is a variable)
         # This means we want P(X|Y=y) for each value y of Y
-        variable_conditions = [c for c in (conditions or []) if not hasattr(c, 'to_narwhals_expr')]
-        expression_conditions = [c for c in (conditions or []) if hasattr(c, 'to_narwhals_expr')]
-        
+        expression_conditions = [
+            c for c in (conditions or []) if hasattr(c, "to_narwhals_expr")
+        ]
+
         # Get filtered dataframe for expression conditions only
         df = self._get_filtered_dataframe(expression_conditions)
 
@@ -265,9 +272,9 @@ class ProbabilityCalculator:
                 # Try to get the first row to check if any rows exist
                 # This is more efficient than len() for lazy frames
                 first_row = df.head(1)
-                
+
                 # Handle lazy frames properly
-                if hasattr(first_row, 'collect'):
+                if hasattr(first_row, "collect"):
                     # It's a lazy frame, collect it to check length
                     collected_row = first_row.collect()
                     if len(collected_row) == 0:
@@ -280,7 +287,7 @@ class ProbabilityCalculator:
                         raise ProbabilityError(
                             "Conditioning event has zero probability - no rows match the given conditions"
                         )
-                
+
                 # Now we know there's at least one row, calculate the actual count
                 total = len(df)
             except Exception:
@@ -294,7 +301,7 @@ class ProbabilityCalculator:
                     total = conditional_count
                 except TypeError:
                     # For lazy frames where len() doesn't work, we'll need to collect
-                    if hasattr(df, 'collect'):
+                    if hasattr(df, "collect"):
                         collected_df = df.collect()
                         conditional_count = len(collected_df)
                         if conditional_count == 0:
@@ -337,7 +344,7 @@ class ProbabilityCalculator:
 
         # Ensure result is collected if it's a lazy frame
         # This is necessary because result objects expect eager frames
-        if hasattr(result, 'collect'):
+        if hasattr(result, "collect"):
             result = result.collect()
 
         # Cache the result for future reuse
@@ -387,8 +394,6 @@ class ProbabilityCalculator:
         - 9.2: Support multiple conditions combined with AND
         - 9.3: Support ternary conditions like a < x < b
         """
-        df = self.df
-
         # Get filtered dataframe for conditions (with caching)
         conditional_df = self._get_filtered_dataframe(conditions)
 
@@ -397,9 +402,9 @@ class ProbabilityCalculator:
             try:
                 # Try to get the first row to check if any rows exist (more efficient for lazy frames)
                 first_row = conditional_df.head(1)
-                
+
                 # Handle lazy frames properly
-                if hasattr(first_row, 'collect'):
+                if hasattr(first_row, "collect"):
                     # It's a lazy frame, collect it to check length
                     collected_row = first_row.collect()
                     if len(collected_row) == 0:
@@ -412,7 +417,7 @@ class ProbabilityCalculator:
                         raise ProbabilityError(
                             "Conditioning event has zero probability - no rows match the given conditions"
                         )
-                
+
                 # Calculate denominator only when we know there are rows
                 denominator = len(conditional_df)
             except Exception:
@@ -425,7 +430,7 @@ class ProbabilityCalculator:
                         )
                 except TypeError:
                     # For lazy frames where len() doesn't work, we'll need to collect
-                    if hasattr(conditional_df, 'collect'):
+                    if hasattr(conditional_df, "collect"):
                         collected_df = conditional_df.collect()
                         denominator = len(collected_df)
                         if denominator == 0:

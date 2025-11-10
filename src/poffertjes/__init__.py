@@ -15,17 +15,17 @@ Basic Usage:
     >>> import pandas as pd
     >>> from poffertjes import p
     >>> from poffertjes.variable import VariableBuilder
-    >>> 
+    >>>
     >>> # Create some data
     >>> df = pd.DataFrame({
     ...     'x': [1, 2, 1, 2, 1],
     ...     'y': ['A', 'B', 'A', 'B', 'A']
     ... })
-    >>> 
+    >>>
     >>> # Extract variables
     >>> vb = VariableBuilder.from_data(df)
     >>> x, y = vb.get_variables('x', 'y')
-    >>> 
+    >>>
     >>> # Calculate probabilities
     >>> p(x)  # Marginal distribution of x
     >>> p(x == 1)  # P(X = 1)
@@ -50,7 +50,7 @@ __version__ = "0.1.0"
 __all__ = [
     "p",
     "PoffertjesError",
-    "DataframeError", 
+    "DataframeError",
     "VariableError",
     "ExpressionError",
     "ProbabilityError",

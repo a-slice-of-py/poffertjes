@@ -179,22 +179,28 @@ class VariableBuilder:
         try:
             # Try to get first row - for lazy frames this will need to be collected
             first_row = self._nw_frame.head(1)
-            
+
             # Check if it's a lazy frame (Polars LazyFrame)
-            if hasattr(first_row, 'collect'):
+            if hasattr(first_row, "collect"):
                 # It's a lazy frame, collect it to check length
                 collected_row = first_row.collect()
                 if len(collected_row) == 0:
-                    raise DataframeError("Cannot create variables from an empty dataframe")
+                    raise DataframeError(
+                        "Cannot create variables from an empty dataframe"
+                    )
             else:
                 # It's an eager frame, can check length directly
                 if len(first_row) == 0:
-                    raise DataframeError("Cannot create variables from an empty dataframe")
+                    raise DataframeError(
+                        "Cannot create variables from an empty dataframe"
+                    )
         except Exception:
             # Fallback to len() check if head() fails (for eager frames)
             try:
                 if len(self._nw_frame) == 0:
-                    raise DataframeError("Cannot create variables from an empty dataframe")
+                    raise DataframeError(
+                        "Cannot create variables from an empty dataframe"
+                    )
             except TypeError:
                 # If len() also fails (lazy frame), we'll assume it's not empty
                 # This is a reasonable assumption since most lazy operations wouldn't
@@ -206,16 +212,16 @@ class VariableBuilder:
 
     def _get_column_names(self) -> List[str]:
         """Get column names efficiently, handling lazy frames properly.
-        
+
         For lazy frames (like Polars LazyFrame), this uses collect_schema().names()
         to avoid the performance warning. For eager frames, it uses .columns directly.
-        
+
         Returns:
             List of column names
         """
         # Check if this is a lazy frame that has collect_schema method
         native_frame = self._nw_frame.to_native()
-        if hasattr(native_frame, 'collect_schema'):
+        if hasattr(native_frame, "collect_schema"):
             # This is a Polars LazyFrame, use collect_schema to avoid warning
             return native_frame.collect_schema().names()
         else:
