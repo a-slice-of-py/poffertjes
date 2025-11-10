@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Union, List, Dict, Iterator, Tuple, Optional, TYPE_CHECKING
+from typing import Any, Union, List, Dict, Iterator, Tuple, Optional, TYPE_CHECKING, Protocol
 import narwhals as nw
+from narwhals.typing import FrameT
 
 from poffertjes.exceptions import VariableError
 
@@ -36,7 +37,7 @@ class ScalarResult(QueryResult):
         self,
         value: float,
         expressions: Optional[List[Union["Expression", "CompositeExpression"]]] = None,
-        dataframe: Optional[Any] = None
+        dataframe: Optional[FrameT] = None
     ) -> None:
         """Initialize a ScalarResult.
         
@@ -109,9 +110,9 @@ class DistributionResult(QueryResult):
     
     def __init__(
         self,
-        distribution: Any,  # Narwhals dataframe
+        distribution: FrameT,  # Narwhals dataframe
         variables: List["Variable"],
-        dataframe: Any,  # Narwhals dataframe
+        dataframe: FrameT,  # Narwhals dataframe
         conditions: Optional[List[Union["Expression", "Variable"]]] = None
     ) -> None:
         """Initialize a DistributionResult.
@@ -175,9 +176,14 @@ class DistributionResult(QueryResult):
         return result
     
     def to_dict(self) -> Dict[Any, float]:
-        """Convert distribution to dictionary."""
+        """Convert distribution to dictionary.
+        
+        Returns:
+            Dictionary mapping values to probabilities. For single variables,
+            keys are the values. For multiple variables, keys are tuples of values.
+        """
         # Convert to (value, probability) pairs
-        result = {}
+        result: Dict[Any, float] = {}
         for row in self.distribution.iter_rows(named=True):
             if len(self.variables) == 1:
                 key = row[self.variables[0].name]
@@ -187,14 +193,19 @@ class DistributionResult(QueryResult):
         return result
     
     def to_dataframe(self) -> Any:
-        """Convert distribution to native dataframe format."""
+        """Convert distribution to native dataframe format.
+        
+        Returns:
+            Native dataframe (Pandas DataFrame or Polars DataFrame) containing
+            the distribution data with columns for variables and probabilities.
+        """
         return self.distribution.to_native()
 
 
 class Distribution:
     """Represents a probability distribution."""
     
-    def __init__(self, data: Any, variables: List[str]) -> None:
+    def __init__(self, data: FrameT, variables: List[str]) -> None:
         """Initialize a Distribution.
         
         Args:
@@ -234,11 +245,36 @@ class Distribution:
         return "\n".join(lines)
     
     def to_dict(self) -> Dict[Any, float]:
-        """Convert to dictionary."""
+        """Convert distribution to dictionary format.
+        
+        Returns:
+            Dictionary mapping values to probabilities. For single variables,
+            keys are the values. For multiple variables, keys are tuples of values.
+            
+        Examples:
+            >>> dist = p(x)  # Distribution over single variable
+            >>> dist.to_dict()  # {1: 0.4, 2: 0.6}
+            
+            >>> joint_dist = p(x, y)  # Joint distribution
+            >>> joint_dist.to_dict()  # {(1, 'A'): 0.2, (1, 'B'): 0.2, (2, 'A'): 0.3, (2, 'B'): 0.3}
+        """
         return {value: prob for value, prob in self}
     
     def to_dataframe(self) -> Any:
-        """Convert to native dataframe format (Pandas/Polars)."""
+        """Convert to native dataframe format (Pandas/Polars).
+        
+        Returns:
+            Native dataframe (Pandas DataFrame or Polars DataFrame) containing
+            the distribution with columns for each variable, count, and probability.
+            
+        Examples:
+            >>> dist = p(x)
+            >>> df = dist.to_dataframe()
+            >>> print(df)
+            #    x  count  probability
+            # 0  1      2         0.4
+            # 1  2      3         0.6
+        """
         return self.data.to_native()
     
     def __eq__(self, other: "Distribution") -> bool:

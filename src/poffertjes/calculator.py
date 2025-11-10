@@ -2,6 +2,7 @@
 
 from typing import Any, List, Optional, Union, TYPE_CHECKING
 import narwhals as nw
+from narwhals.typing import FrameT
 
 from poffertjes.exceptions import ProbabilityError, DataframeError
 
@@ -22,7 +23,7 @@ class ProbabilityCalculator:
     - 6.2: Use Narwhals operations for dataframe-agnostic counting
     """
 
-    def __init__(self, dataframe: Any) -> None:
+    def __init__(self, dataframe: FrameT) -> None:
         """Initialize the calculator with a dataframe.
 
         Args:
@@ -41,7 +42,7 @@ class ProbabilityCalculator:
         self,
         variables: List["Variable"],
         conditions: Optional[List["Expression"]] = None,
-    ) -> Any:
+    ) -> FrameT:
         """Calculate probability distribution using group_by + agg.
 
         This method calculates marginal probability distributions P(X) or P(X,Y)
@@ -214,7 +215,7 @@ class ProbabilityCalculator:
         self,
         variables: List["Variable"],
         conditions: Optional[List["Expression"]] = None,
-    ) -> Any:
+    ) -> FrameT:
         """Calculate joint probability distribution using multi-column group_by.
 
         This method calculates joint probability distributions P(X,Y) or P(X,Y,Z)

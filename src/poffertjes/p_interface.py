@@ -8,6 +8,11 @@ from poffertjes.variable import Variable
 from poffertjes.expression import Expression, CompositeExpression
 from poffertjes.exceptions import DataframeError, VariableError
 
+# Import for type hints - will be resolved at runtime by query_builder
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from poffertjes.result import QueryResult
+
 
 class P:
     """Singleton probability query interface.

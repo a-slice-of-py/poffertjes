@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, List, Union
 
 import narwhals as nw
-from narwhals.typing import IntoFrameT
+from narwhals.typing import IntoFrameT, FrameT
 
 from poffertjes.expression import Expression
 from poffertjes.exceptions import DataframeError, VariableError
@@ -19,7 +19,7 @@ class Variable:
     avoiding duplication in memory.
     """
 
-    def __init__(self, name: str, nw_frame: Any) -> None:
+    def __init__(self, name: str, nw_frame: FrameT) -> None:
         """Initialize a Variable.
 
         Args:
@@ -149,7 +149,9 @@ class Variable:
             >>> x.isin([1, 2, 3])
         """
         if not values:
-            raise VariableError("Cannot create 'isin' expression with empty values list")
+            raise VariableError(
+                "Cannot create 'isin' expression with empty values list"
+            )
         return Expression(self, "in", values)
 
 

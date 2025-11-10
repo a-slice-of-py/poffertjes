@@ -159,8 +159,20 @@ class QueryBuilder:
     def is_scalar_query(self) -> bool:
         """Check if this is a scalar query (has expressions).
         
+        Scalar queries return single probability values and occur when the query
+        contains expressions like p(x == 5) or p(x > 10, y == 'A').
+        
         Returns:
             True if the query has expressions (scalar query), False otherwise (distribution query)
+            
+        Examples:
+            >>> # These are scalar queries
+            >>> p(x == 5)  # QueryBuilder.is_scalar_query -> True
+            >>> p(x > 10, y == 'A')  # QueryBuilder.is_scalar_query -> True
+            
+            >>> # These are distribution queries  
+            >>> p(x)  # QueryBuilder.is_scalar_query -> False
+            >>> p(x, y)  # QueryBuilder.is_scalar_query -> False
         """
         return len(self.expressions) > 0
 
@@ -168,8 +180,20 @@ class QueryBuilder:
     def is_distribution_query(self) -> bool:
         """Check if this is a distribution query (no expressions).
         
+        Distribution queries return probability distributions and occur when the query
+        contains only variables like p(x) or p(x, y).
+        
         Returns:
             True if the query has no expressions (distribution query), False otherwise (scalar query)
+            
+        Examples:
+            >>> # These are distribution queries
+            >>> p(x)  # QueryBuilder.is_distribution_query -> True
+            >>> p(x, y)  # QueryBuilder.is_distribution_query -> True
+            
+            >>> # These are scalar queries
+            >>> p(x == 5)  # QueryBuilder.is_distribution_query -> False
+            >>> p(x > 10, y == 'A')  # QueryBuilder.is_distribution_query -> False
         """
         return len(self.expressions) == 0
 
