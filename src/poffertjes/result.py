@@ -61,47 +61,65 @@ class ScalarResult(QueryResult):
         """String representation of the scalar result."""
         return f"{self.value:.6f}"
 
-    def given(self, *args: Union["Expression", "Variable"]) -> "ScalarResult":
+    def given(self, *args: Union["Expression", "Variable"]) -> Union["ScalarResult", "DistributionResult"]:
         """Calculate conditional probability P(original expressions | conditions).
 
-        Example:
-            p(x == 1).given(y == 2)  # P(X=1 | Y=2)
+        Examples:
+            p(x == 1).given(y == 2)  # P(X=1 | Y=2) -> ScalarResult
+            p(x == 1).given(y)       # P(X=1 | Y=y) for each y -> DistributionResult
 
         Args:
             *args: Expressions or variables to condition on.
 
         Returns:
-            New ScalarResult with conditional probability.
+            ScalarResult if all conditions are expressions, DistributionResult if any condition is a variable.
         """
         from poffertjes.calculator import ProbabilityCalculator
+        from poffertjes.variable import Variable
 
         # Parse conditioning arguments
         conditions = self._parse_conditioning_args(args)
 
-        # Calculate conditional probability
+        # Check if any condition is a Variable (not an Expression)
+        has_variable_condition = any(isinstance(cond, Variable) for cond in conditions)
+
+        if self._dataframe is None:
+            raise VariableError(
+                "Cannot condition ScalarResult on variables without dataframe context. "
+                "ScalarResult must be created from a probability calculation to support variable conditioning."
+            )
+
         calculator = ProbabilityCalculator(self._dataframe)
-        prob = calculator.calculate_scalar(
-            expressions=self._expressions, conditions=conditions
-        )
 
-        return ScalarResult(prob, self._expressions, self._dataframe)
+        if has_variable_condition:
+            # When conditioning on a variable, we need to return a distribution
+            # showing the scalar probability for each value of the conditioning variable(s)
+            dist = calculator.calculate_scalar_distribution(
+                expressions=self._expressions, conditions=conditions
+            )
+            
+            # Extract the conditioning variables for the result
+            conditioning_vars = [cond for cond in conditions if isinstance(cond, Variable)]
+            
+            return DistributionResult(dist, conditioning_vars, self._dataframe, conditions)
+        else:
+            # All conditions are expressions, return scalar result
+            prob = calculator.calculate_scalar(
+                expressions=self._expressions, conditions=conditions
+            )
+            return ScalarResult(prob, self._expressions, self._dataframe)
 
-    def _parse_conditioning_args(self, args) -> List["Expression"]:
-        """Parse arguments into list of expressions for conditioning."""
+    def _parse_conditioning_args(self, args) -> List[Union["Expression", "Variable"]]:
+        """Parse arguments into list of expressions/variables for conditioning."""
         from poffertjes.expression import Expression
         from poffertjes.variable import Variable
 
         conditions = []
         for arg in args:
-            if isinstance(arg, Expression):
+            if isinstance(arg, (Expression, Variable)):
                 conditions.append(arg)
-            elif isinstance(arg, Variable):
-                # Variable without expression means condition on all values
-                # This is handled differently in distribution case
-                raise VariableError(
-                    "Scalar result cannot be conditioned on variable without expression. "
-                    "Use an expression like y == value instead."
-                )
+            else:
+                raise VariableError(f"Invalid conditioning argument: {arg}")
         return conditions
 
 

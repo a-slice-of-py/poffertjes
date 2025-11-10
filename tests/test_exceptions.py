@@ -211,7 +211,7 @@ class TestResultErrorHandling:
         # Create a scalar result
         scalar_result = ScalarResult(0.5, [x == 1], None)
         
-        with pytest.raises(VariableError, match="Scalar result cannot be conditioned on variable without expression"):
+        with pytest.raises(VariableError, match="Cannot condition ScalarResult on variables without dataframe context"):
             scalar_result.given(y)  # Should be y == value
     
     def test_distribution_result_invalid_conditioning_error(self):

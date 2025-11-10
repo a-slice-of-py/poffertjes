@@ -507,3 +507,105 @@ class ProbabilityCalculator:
         # Use the same efficient implementation as calculate_distribution
         # This satisfies requirement 7.4: use multi-column group_by for joint distributions
         return self.calculate_distribution(variables, conditions)
+        return self.calculate_distribution(variables, conditions)
+
+    def calculate_scalar_distribution(
+        self,
+        expressions: List[Union["Expression", "CompositeExpression"]],
+        conditions: Optional[List[Union["Expression", "Variable"]]] = None,
+    ) -> FrameT:
+        """Calculate scalar probability distribution conditioned on variables.
+
+        This method handles cases like p(x == 1).given(y) where we want to see
+        P(X=1 | Y=y) for each value y of Y.
+
+        Args:
+            expressions: The expressions to calculate probability for (e.g., x == 1)
+            conditions: List of expressions and variables to condition on
+
+        Returns:
+            Narwhals dataframe with conditioning variable values and probabilities
+        """
+        if not conditions:
+            raise ProbabilityError("calculate_scalar_distribution requires conditions")
+
+        # Separate variable conditions from expression conditions
+        variable_conditions = [
+            c for c in conditions if not hasattr(c, "to_narwhals_expr")
+        ]
+        expression_conditions = [
+            c for c in conditions if hasattr(c, "to_narwhals_expr")
+        ]
+
+        if not variable_conditions:
+            raise ProbabilityError(
+                "calculate_scalar_distribution requires at least one variable condition"
+            )
+
+        # Get all unique values for the conditioning variables
+        conditioning_vars = variable_conditions
+        var_names = [var.name for var in conditioning_vars]
+
+        # Apply expression conditions first if any
+        base_df = self.df
+        for expr_cond in expression_conditions:
+            base_df = base_df.filter(expr_cond.to_narwhals_expr())
+
+        # Get unique combinations of conditioning variable values
+        unique_combinations = base_df.select(var_names).unique()
+
+        results = []
+
+        # For each unique combination, calculate the scalar probability
+        for row in unique_combinations.iter_rows(named=True):
+            # Create conditions for this specific combination
+            specific_conditions = []
+
+            # Add the specific values for conditioning variables
+            for var in conditioning_vars:
+                var_value = row[var.name]
+                # Create an equality expression for this variable value
+                from poffertjes.expression import Expression, ExpressionOp
+
+                specific_expr = Expression(var, ExpressionOp.EQ, var_value)
+                specific_conditions.append(specific_expr)
+
+            # Add any expression conditions
+            specific_conditions.extend(expression_conditions)
+
+            # Calculate the scalar probability for this combination
+            prob = self.calculate_scalar(expressions, specific_conditions)
+
+            # Create result row
+            result_row = dict(row)
+            result_row["probability"] = prob
+            results.append(result_row)
+
+        # Convert results to dataframe
+        import narwhals as nw
+
+        if results:
+            # Create a native dataframe from results and convert to narwhals
+            if hasattr(self.df, "collect"):
+                # It's a lazy frame, use polars
+                import polars as pl
+
+                native_df = pl.DataFrame(results)
+            else:
+                # It's an eager frame, use pandas
+                import pandas as pd
+
+                native_df = pd.DataFrame(results)
+            return nw.from_native(native_df)
+        else:
+            # Empty result
+            columns = var_names + ["probability"]
+            if hasattr(self.df, "collect"):
+                import polars as pl
+
+                native_df = pl.DataFrame({col: [] for col in columns})
+            else:
+                import pandas as pd
+
+                native_df = pd.DataFrame(columns=columns)
+            return nw.from_native(native_df)

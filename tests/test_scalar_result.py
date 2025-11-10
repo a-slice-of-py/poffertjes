@@ -3,7 +3,7 @@
 import pytest
 import pandas as pd
 import narwhals as nw
-from poffertjes.result import ScalarResult
+from poffertjes.result import ScalarResult, DistributionResult
 from poffertjes.variable import VariableBuilder
 from poffertjes.expression import Expression
 from poffertjes.exceptions import VariableError
@@ -43,15 +43,16 @@ class TestScalarResult:
         result = ScalarResult(0.5)
         assert repr(result) == "0.500000"
     
-    def test_given_with_variable_raises_error(self):
-        """Test that conditioning on a variable without expression raises error."""
+    def test_given_with_variable_without_dataframe_raises_error(self):
+        """Test that conditioning on a variable without dataframe context raises error."""
         df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]})
         vb = VariableBuilder.from_data(df)
         x, y = vb.get_variables('x', 'y')
         
+        # ScalarResult without dataframe context
         result = ScalarResult(0.5)
         
-        with pytest.raises(VariableError, match="Scalar result cannot be conditioned on variable without expression"):
+        with pytest.raises(VariableError, match="Cannot condition ScalarResult on variables without dataframe context"):
             result.given(y)
     
     def test_given_with_expression(self):
@@ -95,13 +96,60 @@ class TestScalarResult:
         assert conditions[0] is expr1
         assert conditions[1] is expr2
     
-    def test_parse_conditioning_args_with_variable_raises_error(self):
-        """Test that parsing conditioning arguments with variable raises error."""
+    def test_parse_conditioning_args_with_variable_succeeds(self):
+        """Test that parsing conditioning arguments with variable now succeeds."""
         df = pd.DataFrame({'x': [1, 2, 3], 'y': [4, 5, 6]})
         vb = VariableBuilder.from_data(df)
         x, y = vb.get_variables('x', 'y')
         
         result = ScalarResult(0.5)
         
-        with pytest.raises(VariableError, match="Scalar result cannot be conditioned on variable without expression"):
-            result._parse_conditioning_args([y])
+        # This should now work (no longer raises an error)
+        conditions = result._parse_conditioning_args([y])
+        assert len(conditions) == 1
+        assert conditions[0] is y
+
+    def test_given_with_variable_returns_distribution(self):
+        """Test that conditioning scalar result on variable returns distribution."""
+        df = pd.DataFrame({'x': [1, 1, 2, 2], 'y': [1, 2, 1, 2]})
+        nw_df = nw.from_native(df)
+        vb = VariableBuilder.from_data(df)
+        x, y = vb.get_variables('x', 'y')
+        
+        # Create a scalar result with dataframe context
+        expr = x == 1
+        result = ScalarResult(0.5, [expr], nw_df)
+        
+        # Conditioning on variable should return DistributionResult
+        cond_result = result.given(y)
+        
+        assert isinstance(cond_result, DistributionResult)
+        assert len(cond_result.variables) == 1
+        assert cond_result.variables[0] is y
+        
+        # Check the actual probabilities
+        prob_dict = cond_result.to_dict()
+        assert 1 in prob_dict  # P(X=1 | Y=1)
+        assert 2 in prob_dict  # P(X=1 | Y=2)
+
+    def test_given_with_mixed_conditions(self):
+        """Test conditioning with both variable and expression."""
+        df = pd.DataFrame({
+            'x': [1, 1, 2, 2, 1, 2], 
+            'y': [1, 2, 1, 2, 1, 2],
+            'z': [1, 1, 1, 1, 2, 2]
+        })
+        nw_df = nw.from_native(df)
+        vb = VariableBuilder.from_data(df)
+        x, y, z = vb.get_variables('x', 'y', 'z')
+        
+        # Create a scalar result
+        expr = x == 1
+        result = ScalarResult(0.5, [expr], nw_df)
+        
+        # Condition on both variable and expression
+        cond_result = result.given(y, z == 1)
+        
+        assert isinstance(cond_result, DistributionResult)
+        assert len(cond_result.variables) == 1
+        assert cond_result.variables[0] is y
