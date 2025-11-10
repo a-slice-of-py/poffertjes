@@ -223,7 +223,6 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 - [x] 10. Add comprehensive integration tests
 
-
   - [x] 10.1 Test end-to-end marginal probability workflows
 
     - Test `p(x)` returning distributions
@@ -258,28 +257,18 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 - [x] 11. Implement property-based tests
 
-
-
-
-
-
   - [x] 11.1 Create Hypothesis strategies for test data
-
-
-
 
     - Create dataframe generation strategy
     - Support multiple dtypes
     - _Requirements: 12.1, 12.9_
   
-
   - [x] 11.2 Test probability axioms
 
     - Test non-negativity: all probabilities >= 0
     - Test normalization: probabilities sum to 1.0
     - _Requirements: 12.3, 16.5_
   
-
   - [x] 11.3 Test chain rule
 
     - Verify P(X,Y) = P(X|Y) * P(Y)
@@ -287,30 +276,25 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 11.4 Test Bayes' theorem
 
-
     - Verify `P(X|Y) * P(Y) = P(Y|X) * P(X)`
     - _Requirements: 12.5_
   
   - [x] 11.5 Test law of total probability
-
 
     - Verify sum over Y of P(X|Y) * P(Y) = P(X)
     - _Requirements: 12.6_
   
   - [x] 11.6 Test union probability formula
 
-
     - Verify P(X or Y) = P(X) + P(Y) - P(X and Y)
     - _Requirements: 12.7_
   
   - [x] 11.7 Test marginalization
 
-
     - Verify sum over Y of P(X,Y) = P(X)
     - _Requirements: 12.8_
   
   - [x] 11.8 Test edge cases
-
 
     - Test empty dataframes, single-value columns, missing data
     - Test very small and very large datasets
@@ -318,18 +302,12 @@ This implementation plan breaks down the probabilistic query interface into incr
 
 - [x] 12. Add type hints and documentation
 
-
-
-
-
   - [x] 12.1 Add type hints to all public APIs
-
 
     - Use proper type annotations
     - Support IDE autocomplete
     - _Requirements: 14.2, 14.8_
   
-
   - [x] 12.2 Add docstrings to all public APIs
 
     - Follow Google or NumPy docstring style
@@ -338,23 +316,27 @@ This implementation plan breaks down the probabilistic query interface into incr
   
   - [x] 12.3 Create API documentation
 
-
     - Document main usage patterns
     - Include examples for all features
     - _Requirements: 14.7_
 
 - [ ] 13. Performance optimization
-  - [ ] 13.1 Ensure lazy evaluation is used
+
+
+  - [x] 13.1 Ensure lazy evaluation is used
+
     - Verify Narwhals lazy operations are preferred
     - Avoid unnecessary `.collect()` calls
     - _Requirements: 7.1, 7.11, 7.12_
   
-  - [ ] 13.2 Optimize group_by operations
+  - [x] 13.2 Optimize group_by operations
+
     - Ensure efficient aggregation patterns
     - Reuse computations where possible
     - _Requirements: 7.2, 7.3, 7.4, 7.13_
   
-  - [ ] 13.3 Add performance tests
+  - [x] 13.3 Add performance tests
+
     - Benchmark with large datasets
     - Verify memory efficiency
     - _Requirements: 7.14, 16.2, 16.4_
