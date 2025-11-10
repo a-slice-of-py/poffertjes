@@ -2,8 +2,8 @@
 
 Friendly, pythonic interface for running probabilistic queries on dataframes using mathematical notation.
 
-!!! danger "Funny side-project"
-    This is a personal experiment of coding a library with a mixed approach between TDD and spec-driven design. It's not meant for production use since I currently do not expect to actively maintain it.
+> [!CAUTION]
+> This is a personal experiment of coding a library with a mixed approach between TDD and spec-driven design. It's not meant for production use since I currently do not expect to actively maintain it.
 
 ## Features
 
