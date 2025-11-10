@@ -44,8 +44,6 @@ from poffertjes.exceptions import (
     ProbabilityError,
 )
 
-__version__ = "0.1.0"
-
 # Main exports
 __all__ = [
     "p",

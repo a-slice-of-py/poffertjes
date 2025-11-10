@@ -1,7 +1,8 @@
 [project]
 name = "poffertjes"
 dynamic = ["version"]
-description = "Friendly interface to run probabilistic queries on dataframes"
+description = "Friendly, pythonic interface for probabilistic queries on dataframes"
+keywords = ["probability", "statistics", "dataframes", "pandas", "polars"]
 readme = "README.md"
 authors = [{ name = "Silvio Lugaro", email = "silvio.lugaro@gmail.com" }]
 requires-python = ">=3.13"
