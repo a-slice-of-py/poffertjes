@@ -256,38 +256,62 @@ This implementation plan breaks down the probabilistic query interface into incr
     - Verify native format conversion
     - _Requirements: 15.1, 15.2, 15.6_
 
-- [ ] 11. Implement property-based tests
-  - [ ] 11.1 Create Hypothesis strategies for test data
+- [x] 11. Implement property-based tests
+
+
+
+
+
+
+  - [x] 11.1 Create Hypothesis strategies for test data
+
+
+
+
     - Create dataframe generation strategy
     - Support multiple dtypes
     - _Requirements: 12.1, 12.9_
   
-  - [ ] 11.2 Test probability axioms
+
+  - [x] 11.2 Test probability axioms
+
     - Test non-negativity: all probabilities >= 0
     - Test normalization: probabilities sum to 1.0
     - _Requirements: 12.3, 16.5_
   
-  - [ ] 11.3 Test chain rule
+
+  - [x] 11.3 Test chain rule
+
     - Verify P(X,Y) = P(X|Y) * P(Y)
     - _Requirements: 12.4_
   
-  - [ ] 11.4 Test Bayes' theorem
+  - [x] 11.4 Test Bayes' theorem
+
+
     - Verify `P(X|Y) * P(Y) = P(Y|X) * P(X)`
     - _Requirements: 12.5_
   
-  - [ ] 11.5 Test law of total probability
+  - [x] 11.5 Test law of total probability
+
+
     - Verify sum over Y of P(X|Y) * P(Y) = P(X)
     - _Requirements: 12.6_
   
-  - [ ] 11.6 Test union probability formula
+  - [x] 11.6 Test union probability formula
+
+
     - Verify P(X or Y) = P(X) + P(Y) - P(X and Y)
     - _Requirements: 12.7_
   
-  - [ ] 11.7 Test marginalization
+  - [x] 11.7 Test marginalization
+
+
     - Verify sum over Y of P(X,Y) = P(X)
     - _Requirements: 12.8_
   
-  - [ ] 11.8 Test edge cases
+  - [x] 11.8 Test edge cases
+
+
     - Test empty dataframes, single-value columns, missing data
     - Test very small and very large datasets
     - _Requirements: 12.14, 16.1, 16.2, 16.4, 16.6, 16.7, 16.8, 16.9, 16.10_
