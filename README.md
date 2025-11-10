@@ -1,4 +1,4 @@
-# Poffertjes
+# 🥞 Poffertjes
 
 Friendly, pythonic interface for running probabilistic queries on dataframes using mathematical notation.
 
