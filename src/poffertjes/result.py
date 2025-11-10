@@ -11,6 +11,7 @@ from poffertjes.exceptions import VariableError
 if TYPE_CHECKING:
     from poffertjes.expression import Expression, CompositeExpression
     from poffertjes.variable import Variable
+    from plotly.graph_objects import Figure
 
 
 class QueryResult(ABC):
@@ -48,6 +49,9 @@ class ScalarResult(QueryResult):
         self.value = value
         self._expressions = expressions or []
         self._dataframe = dataframe
+
+    def _display_(self) -> float:
+        return self.value
 
     def __float__(self) -> float:
         """Convert to float."""
@@ -123,6 +127,10 @@ class DistributionResult(QueryResult):
         self.variables = variables
         self.dataframe = dataframe
         self._conditions = conditions or []
+
+    def _display_(self) -> Figure:
+        import plotly.express as px
+        return px.bar(self.distribution, x="x", y="probability")
 
     def given(self, *args: Union["Expression", "Variable"]) -> "DistributionResult":
         """Calculate conditional distribution P(variables | conditions).
