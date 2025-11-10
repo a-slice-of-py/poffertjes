@@ -57,11 +57,107 @@ class ScalarResult(QueryResult):
         """Convert to float."""
         return self.value
 
-    def __repr__(self) -> str:
-        """String representation of the scalar result."""
-        return f"{self.value:.6f}"
+    def _convert_arg(self, other):
+        """Convert ScalarResult to float, leave other types as-is."""
+        return other.value if isinstance(other, ScalarResult) else other
 
-    def given(self, *args: Union["Expression", "Variable"]) -> Union["ScalarResult", "DistributionResult"]:
+    # Arithmetic operations
+    def __add__(self, other):
+        return self.value + self._convert_arg(other)
+
+    def __radd__(self, other):
+        return self._convert_arg(other) + self.value
+
+    def __sub__(self, other):
+        return self.value - self._convert_arg(other)
+
+    def __rsub__(self, other):
+        return self._convert_arg(other) - self.value
+
+    def __mul__(self, other):
+        return self.value * self._convert_arg(other)
+
+    def __rmul__(self, other):
+        return self._convert_arg(other) * self.value
+
+    def __truediv__(self, other):
+        return self.value / self._convert_arg(other)
+
+    def __rtruediv__(self, other):
+        return self._convert_arg(other) / self.value
+
+    def __floordiv__(self, other):
+        return self.value // self._convert_arg(other)
+
+    def __rfloordiv__(self, other):
+        return self._convert_arg(other) // self.value
+
+    def __mod__(self, other):
+        return self.value % self._convert_arg(other)
+
+    def __rmod__(self, other):
+        return self._convert_arg(other) % self.value
+
+    def __pow__(self, other):
+        return self.value ** self._convert_arg(other)
+
+    def __rpow__(self, other):
+        return self._convert_arg(other) ** self.value
+
+    # Comparison operations
+    def __eq__(self, other):
+        return self.value == self._convert_arg(other)
+
+    def __ne__(self, other):
+        return self.value != self._convert_arg(other)
+
+    def __lt__(self, other):
+        return self.value < self._convert_arg(other)
+
+    def __le__(self, other):
+        return self.value <= self._convert_arg(other)
+
+    def __gt__(self, other):
+        return self.value > self._convert_arg(other)
+
+    def __ge__(self, other):
+        return self.value >= self._convert_arg(other)
+
+    # Unary operations
+    def __neg__(self):
+        return -self.value
+
+    def __pos__(self):
+        return +self.value
+
+    def __abs__(self):
+        return abs(self.value)
+
+    def __round__(self, ndigits=0):
+        return round(self.value, ndigits)
+
+    def __trunc__(self):
+        import math
+
+        return math.trunc(self.value)
+
+    def __floor__(self):
+        import math
+
+        return math.floor(self.value)
+
+    def __ceil__(self):
+        import math
+
+        return math.ceil(self.value)
+
+    def __getattr__(self, name: str) -> Any:
+        """Delegate other float methods to the underlying float value."""
+        return getattr(self.value, name)
+
+    def given(
+        self, *args: Union["Expression", "Variable"]
+    ) -> Union["ScalarResult", "DistributionResult"]:
         """Calculate conditional probability P(original expressions | conditions).
 
         Examples:
@@ -97,11 +193,15 @@ class ScalarResult(QueryResult):
             dist = calculator.calculate_scalar_distribution(
                 expressions=self._expressions, conditions=conditions
             )
-            
+
             # Extract the conditioning variables for the result
-            conditioning_vars = [cond for cond in conditions if isinstance(cond, Variable)]
-            
-            return DistributionResult(dist, conditioning_vars, self._dataframe, conditions)
+            conditioning_vars = [
+                cond for cond in conditions if isinstance(cond, Variable)
+            ]
+
+            return DistributionResult(
+                dist, conditioning_vars, self._dataframe, conditions
+            )
         else:
             # All conditions are expressions, return scalar result
             prob = calculator.calculate_scalar(
@@ -147,8 +247,7 @@ class DistributionResult(QueryResult):
         self._conditions = conditions or []
 
     def _display_(self) -> Figure:
-        import plotly.express as px
-        return px.bar(self.distribution, x="x", y="probability")
+        return self.to_dataframe()
 
     def given(self, *args: Union["Expression", "Variable"]) -> "DistributionResult":
         """Calculate conditional distribution P(variables | conditions).

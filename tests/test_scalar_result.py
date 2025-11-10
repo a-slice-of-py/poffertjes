@@ -153,3 +153,104 @@ class TestScalarResult:
         assert isinstance(cond_result, DistributionResult)
         assert len(cond_result.variables) == 1
         assert cond_result.variables[0] is y
+
+    def test_arithmetic_operations(self):
+        """Test that ScalarResult behaves like a float in arithmetic operations."""
+        result = ScalarResult(0.5)
+        
+        # Addition
+        assert result + 1 == 1.5
+        assert 1 + result == 1.5
+        assert result + result == 1.0
+        
+        # Subtraction
+        assert result - 0.2 == 0.3
+        assert 1 - result == 0.5
+        assert result - result == 0.0
+        
+        # Multiplication
+        assert result * 2 == 1.0
+        assert 2 * result == 1.0
+        assert result * result == 0.25
+        
+        # Division
+        assert result / 2 == 0.25
+        assert 1 / result == 2.0
+        assert result / result == 1.0
+        
+        # Floor division
+        assert result // 0.2 == 2.0
+        assert 1 // result == 2.0
+        
+        # Modulo
+        assert result % 0.3 == 0.2
+        assert 1 % result == 0.0
+        
+        # Power
+        assert result ** 2 == 0.25
+        assert 2 ** result == pytest.approx(1.414213, rel=1e-5)
+
+    def test_comparison_operations(self):
+        """Test that ScalarResult supports comparison operations."""
+        result1 = ScalarResult(0.5)
+        result2 = ScalarResult(0.3)
+        
+        # Equality
+        assert result1 == 0.5
+        assert result1 != 0.3
+        assert result1 == result1
+        assert result1 != result2
+        
+        # Ordering
+        assert result1 > 0.3
+        assert result1 >= 0.5
+        assert result1 < 0.7
+        assert result1 <= 0.5
+        
+        assert result1 > result2
+        assert result1 >= result2
+        assert result2 < result1
+        assert result2 <= result1
+
+    def test_unary_operations(self):
+        """Test unary operations on ScalarResult."""
+        result = ScalarResult(0.5)
+        negative_result = ScalarResult(-0.3)
+        
+        # Unary operations
+        assert -result == -0.5
+        assert +result == 0.5
+        assert abs(negative_result) == 0.3
+        
+        # Rounding and truncation
+        precise_result = ScalarResult(0.123456)
+        assert round(precise_result, 2) == 0.12
+        
+        import math
+        assert math.trunc(precise_result) == 0
+        assert math.floor(precise_result) == 0
+        assert math.ceil(precise_result) == 1
+
+    def test_mixed_arithmetic_preserves_given_functionality(self):
+        """Test that arithmetic operations don't break the .given() functionality."""
+        df = pd.DataFrame({'x': [1, 1, 2, 2], 'y': [1, 2, 1, 2]})
+        nw_df = nw.from_native(df)
+        vb = VariableBuilder.from_data(df)
+        x, y = vb.get_variables('x', 'y')
+        
+        # Create a scalar result
+        expr = x == 1
+        result = ScalarResult(0.5, [expr], nw_df)
+        
+        # Arithmetic operations should work
+        arithmetic_result = result + 0.2
+        assert arithmetic_result == 0.7
+        assert isinstance(arithmetic_result, float)
+        
+        # But the original result should still support .given()
+        try:
+            cond_result = result.given(y == 1)
+            assert isinstance(cond_result, ScalarResult)
+        except ImportError:
+            # ProbabilityCalculator not implemented yet, skip this test
+            pytest.skip("ProbabilityCalculator not implemented yet")

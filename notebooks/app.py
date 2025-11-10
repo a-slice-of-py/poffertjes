@@ -10,6 +10,7 @@ def _():
     import numpy as np
     from poffertjes.variable import VariableBuilder
     from poffertjes import p
+    import marimo as mo
     return VariableBuilder, np, p, pd
 
 
@@ -25,7 +26,7 @@ def _(np, pd):
                 [np.random.randn(N_SAMPLES).transpose() for _ in range(len(columns))],
             )
         )
-    ).map(lambda x: 10 * round(abs(x), 1))
+    ).map(lambda x: 5 * round(abs(x)))
     return (df,)
 
 
@@ -43,13 +44,18 @@ def _(VariableBuilder, df):
 
 @app.cell
 def _(builder):
-    x, y = builder.get_variables("x", "y")
-    return x, y
+    x, y, z = builder.get_variables("x", "y", "z")
+    return x, z
 
 
 @app.cell
-def _(p, x, y):
-    p(x).given(y)
+def _(p, x, z):
+    p(x).given(z==0)
+    return
+
+
+@app.cell
+def _():
     return
 
 
