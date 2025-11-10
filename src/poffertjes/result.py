@@ -57,6 +57,10 @@ class ScalarResult(QueryResult):
         """Convert to float."""
         return self.value
 
+    def __repr__(self) -> str:
+        """Return string representation."""
+        return f"{self.value:.6f}"
+
     def _convert_arg(self, other):
         """Convert ScalarResult to float, leave other types as-is."""
         return other.value if isinstance(other, ScalarResult) else other
