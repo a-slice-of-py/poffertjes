@@ -1,8 +1,8 @@
 """Poffertjes: Friendly interface to run probabilistic queries on dataframes.
 
 Poffertjes provides a pythonic and intuitive interface for calculating probabilities
-on dataframes using mathematical notation like p(x) or p(x).given(y). It supports
-both Pandas and Polars dataframes through the Narwhals abstraction layer.
+on dataframes. It supports both Pandas and Polars dataframes through the Narwhals
+abstraction layer.
 
 Key Features:
     - Mathematical notation: p(x), p(x == 5), p(x).given(y)

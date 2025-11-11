@@ -1,9 +1,9 @@
 # 🥞 Poffertjes
 
-Friendly, pythonic interface for running probabilistic queries on dataframes using mathematical notation.
+Friendly, pythonic interface for running probabilistic queries on dataframes.
 
 > [!CAUTION]
-> This is a personal experiment of coding a library with a mixed approach between TDD and spec-driven design. It's not meant for production use since I currently do not expect to actively maintain it.
+> This is a personal experiment of coding a library with a mixed approach between TDD and spec-driven development. It's **not meant for production use** since I currently do not expect to actively maintain it.
 
 ## Features
 
@@ -30,7 +30,7 @@ df = pd.DataFrame({
 vb = VariableBuilder.from_data(df)
 age, income, purchased = vb.get_variables('age', 'income', 'purchased')
 
-# Calculate probabilities using mathematical notation
+# Calculate probabilities
 print(p(age))                           # Marginal distribution of age
 print(p(purchased == True))             # P(purchased = True) = 0.666667
 print(p(age).given(income == 'high'))   # P(age | income = 'high')
@@ -416,22 +416,10 @@ except PoffertjesError as e:
     print(f"General error: {e}")
 ```
 
-## Contributing
-
-We welcome contributions! Please see our contributing guidelines for details on:
-
-- Setting up the development environment
-- Running tests
-- Submitting pull requests
-- Code style and conventions
-
-## Alternatives
+## Resources
 
 - [ProbPy](https://github.com/petermlm/ProbPy) - Probabilistic reasoning in Python
 - [distfit](https://github.com/erdogant/distfit) - Probability density fitting
-
-## Resources
-
 - https://www.perplexity.ai/search/how-to-compute-conditional-pro-J1F8xdG4SL2FbQrGk3k5Hw
 - https://stackoverflow.com/questions/33468976/pandas-conditional-probability-of-a-given-specific-b
 - https://stackoverflow.com/questions/37818063/how-to-calculate-conditional-probability-of-values-in-dataframe-pandas-python
