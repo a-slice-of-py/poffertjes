@@ -5,6 +5,14 @@ Friendly, pythonic interface for running probabilistic queries on dataframes.
 > [!CAUTION]
 > This is a personal experiment of coding a library with a mixed approach between TDD and spec-driven development. It's **not meant for production use** since I currently do not expect to actively maintain it.
 
+<details>
+    
+<summary>Why "Poffertjes"?</summary><br>
+    
+The inspiration for this library's "friendly interface" came from [Vincent Warmerdam's `peegeem`](https://github.com/koaning/peegeem) and I wanted to pay him tribute. When I was a kid, I visited the Netherlands and fell in love with [poffertjes](https://en.wikipedia.org/wiki/Poffertjes): since this project is filled with _syntactic sugar_, these sweet treats seemed like the perfect fit for the name!
+
+</details>
+
 ## Features
 
 - **Mathematical notation**: Write probability queries like `p(x)`, `p(x == 5)`, `p(x).given(y)`
@@ -425,7 +433,3 @@ except PoffertjesError as e:
 - https://stackoverflow.com/questions/37818063/how-to-calculate-conditional-probability-of-values-in-dataframe-pandas-python
 - https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.plot.density.html
 - https://pandas.pydata.org/docs/reference/api/pandas.crosstab.html
-
-## Why "Poffertjes"?
-
-The inspiration for this library's "friendly interface" came from [Vincent Warmerdam's `peegeem`](https://github.com/koaning/peegeem) and I wanted to pay him tribute. When I was a kid, I visited the Netherlands and fell in love with [poffertjes](https://en.wikipedia.org/wiki/Poffertjes): since this project is filled with _syntactic sugar_, these sweet treats seemed like the perfect fit for the name!
